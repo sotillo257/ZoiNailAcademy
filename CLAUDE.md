@@ -1,0 +1,87 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+Zoi Nail Academy API: a .NET 10 REST API (Clean Architecture) for a course-selling website: 4 courses with dated editions and limited seats, bookings paid by card (Stripe) or bank transfer/Bizum, a waiting list, and a backoffice for the client. The backoffice is closed: two users (`Admin` = the client, `SuperAdmin` = the developer) are seeded from environment variables, and there is no registration. Product docs live in `Docs/`: `PRD.md`, `00-contrato-y-convenciones.md` (routes, DTOs, error codes, events — **it wins over the feature specs**), and `features/Fxx-*.md` (one spec per feature, implemented in order F01 → F11). The `Notes` example feature of the template was removed in F01; it is preserved in the first commit as a pattern reference.
+
+## Commands
+
+```bash
+dotnet build                                  # build the whole solution
+dotnet test                                   # all tests (unit + integration)
+dotnet test tests/UnitTests                   # unit tests only
+dotnet test tests/IntegrationTests            # integration only (requires Docker: uses Testcontainers)
+dotnet test --filter "FullyQualifiedName~ResultTests"          # a single test class
+dotnet test --filter "FullyQualifiedName~ResultTests.Success"  # a single test
+dotnet run --project src/ZoiNailAcademy.Host       # run the API (Swagger UI in development)
+```
+
+EF Core migrations (there is an `IDesignTimeDbContextFactory` that reads `CONNECTION_STRING` or falls back to localhost, so no startup project is needed):
+
+```bash
+dotnet ef migrations add <Name> --project src/ZoiNailAcademy.Infrastructure
+dotnet ef migrations has-pending-model-changes --project src/ZoiNailAcademy.Infrastructure   # also run in CI
+```
+
+Migrations are applied automatically at startup (`Database.MigrateAsync()` in `Program.cs`).
+
+## Architecture
+
+Clean Architecture with 4 projects and a strict dependency flow (enforced by the OpenSpec specs):
+
+- `src/ZoiNailAcademy.Domain` — entities, enums, and domain exceptions. **References no other layer.** Entities inherit from `BaseAuditableEntity` (Guid Id + CreatedAt/UpdatedAt), expose properties with `private set`, and are constructed only through `Create(...)` factory methods.
+- `src/ZoiNailAcademy.Application` — use cases with MediatR (CQRS) + FluentValidation. Validation runs automatically in the pipeline (`ValidationBehavior`). Handlers return `Result`/`Result<T>` as the success envelope (the MediatR response is constrained to `Result`); expected failures that map to an HTTP status code are thrown as typed exceptions (`ConflictException` → 409, `UnauthorizedException` → 401, `ForbiddenException` → 403, `NotFoundException` → 404, `ValidationException` → 400) and translated centrally by `ExceptionHandlingMiddleware`. `DomainException` (invariant violations) → 400. Data access goes through the `IAppDbContext` interface. Does not reference Infrastructure or Host.
+- `src/ZoiNailAcademy.Infrastructure` — EF Core + Npgsql (PostgreSQL). `AppDbContext` implements `IAppDbContext`, manages audit timestamps automatically in `SaveChanges`, and entity configurations live in `Data/Configurations/`. Authentication services (BCrypt password hasher, JWT generator, SHA-256 refresh-token hasher) live in `Authentication/`.
+- `src/ZoiNailAcademy.Host` — ASP.NET Core: controllers (every route is prefixed with `/api` by `ApiRoutePrefixConvention` — never write `api/` in a `[Route]`), OpenAPI/Swagger, CORS only in Development, JWT Bearer authentication with a global fallback policy (every endpoint requires auth unless marked `[AllowAnonymous]`), authorization policies `AuthorizationPolicies.Backoffice` (Admin or SuperAdmin) and `AuthorizationPolicies.SuperAdmin`, named per-IP rate-limit policies (`RateLimitPolicies.Auth`, `.Reservas`, `.Formularios`), `ForwardedHeaders` as the first middleware, and `ExceptionHandlingMiddleware` that translates exceptions into `ProblemDetails` responses (RFC 7807). Registers each layer's DI via its `AddApplication()` / `AddInfrastructure()` extensions.
+
+`Directory.Build.props` centralizes `net10.0`, nullable, and implicit usings — do not redefine those properties in individual `.csproj` files.
+
+The connection string is read from `ConnectionStrings:DefaultConnection` or, failing that, from the `DATABASE_URL` environment variable (URI format, converted into an Npgsql connection string). Deployment targets Railway via a multi-stage `Dockerfile`; Kestrel listens on `http://*:{PORT}` (default 8080; dual-stack IPv6 for Railway's private network, IPv4 fallback) and `GET /api/health` returns 200 without authentication. In production the browser only talks to Next.js, which rewrites `/api/*` to this API over the private network.
+
+JWT signing is configured via the `Jwt` section (`SigningKey`, `Issuer`, `Audience`, `AccessTokenMinutes`, `RefreshTokenDays`), bound in Infrastructure as `JwtOptions`. On Railway these are supplied as environment variables (`Jwt__SigningKey`, …) — `Jwt__SigningKey` is a secret and must never be committed; `appsettings.Development.json` only holds non-production placeholders for local runs. The access token (claims `sub`, `email`, `role`) goes in the response body; the refresh token only travels in the `rt` cookie (`HttpOnly`, `Secure` via `Auth:CookieSecure`, `SameSite=Strict`, `Path=/api/auth`). Users are seeded by `UserSeeder` after migrations (`Admin:*`, `SuperAdmin:*`; startup fails in Production if they are missing). Every configuration key is listed in `.env.example`; a new key must be added there and to `appsettings.json` (without secrets).
+
+Time: never call `DateTime.UtcNow`/`DateTimeOffset.UtcNow`; inject `TimeProvider` (registered as `TimeProvider.System`; integration tests use `FakeTimeProvider`). Timestamps are `DateTimeOffset` (`timestamptz`, UTC).
+
+Swagger UI and the OpenAPI document are mapped in Development, and can also be enabled temporarily in Production via the `Swagger__EnableInProduction=true` environment variable — unset (or `false`) by default, so `/swagger` and `/openapi/v1.json` stay unmapped and return `401` like any other unmatched route. When enabled, both endpoints bypass the global authentication fallback policy.
+
+## Code conventions
+
+- Controllers, not Minimal APIs.
+- New use cases in Application are organized by feature, then by operation: `Application/<Feature>/<Operation>/` (e.g. `Authentication/Login/`), with each operation folder containing its command/query, handler, and validator. Do not create loose handlers outside a feature/operation folder.
+- Commands/Queries/DTOs are positional sealed records (e.g. `public sealed record LoginCommand(string Email, string Password);`).
+- Thin MediatR handlers — business rules live in the domain entities, not in the handler.
+- Domain entities: `private set` properties, instantiation only through static `Create(...)` factory methods that enforce invariants. Handlers never construct entities via public setters.
+- Backoffice controllers live under `admin/...` and carry `[Authorize(Policy = AuthorizationPolicies.Backoffice)]` at class level; SuperAdmin-only actions add `[Authorize(Policy = AuthorizationPolicies.SuperAdmin)]`. `AuthorizationTests` discovers every `/api/admin/**` route dynamically and fails if one is anonymous or lacks those policies.
+- Public form endpoints use `[EnableRateLimiting(RateLimitPolicies.Reservas)]` or `RateLimitPolicies.Formularios`.
+- Domain, routes and DTOs follow the language of the contract (`Curso`, `Edicion`, `Reserva`, JSON `camelCase`, enums as strings); technical code inherited from the template stays in English.
+- `AppDbContext` is only accessible from Infrastructure; Application uses the `IAppDbContext` interface.
+- Nullable enabled; no suppressions (`#pragma` / `!`) without a documented justification.
+
+## Adding a new feature (checklist)
+
+1. Domain: entity in `Domain/Entities/` + unit tests in `tests/UnitTests/Domain/Entities/`.
+2. Application: `Application/<Feature>/<Operation>/` with command/query, handler, validator + handler/validator unit tests.
+3. Infrastructure: `DbSet` in `IAppDbContext` and `AppDbContext`, configuration in `Data/Configurations/`, then `dotnet ef migrations add <Name> --project src/ZoiNailAcademy.Infrastructure`.
+4. Host: controller in `Host/Controllers/`.
+5. Integration tests in `tests/IntegrationTests/Controllers/`.
+
+## Tests
+
+- **UnitTests**: xUnit + FluentAssertions + Moq (+ MockQueryable for `DbSet` mocks). Reference only Domain and Application.
+- **IntegrationTests**: xUnit + `WebApplicationFactory<Program>` + Testcontainers.PostgreSql (spins up a real `postgres:17-alpine`, requires Docker). Tests share the fixture via `IntegrationTestCollection` and inherit from `IntegrationTestBase`. `IntegrationTestBase.SendAsync` sends a fresh `X-Forwarded-For` per request (`NextTestClientIp()`) so the rate limiter does not throttle unrelated tests; use `CreateUserAsync(role)` / `LoginAsNewUserAsync(role)` to get users and tokens (there is no registration), and pass the `rt` cookie explicitly (the client does not keep cookies). Tests that move time forward or change configuration create their own host with `Factory.WithWebHostBuilder(...)`.
+- Naming: `Method_Scenario_ExpectedResult` (e.g. `Handle_ReusingRotatedToken_RevokesEveryActiveTokenOfTheUser`).
+- Domain tests are pure unit tests with no mocks (the domain has no dependencies). Application handler tests mock `IAppDbContext` and services with Moq.
+- Prefer TDD for new use cases: failing test, minimal implementation, refactor.
+- Never run migrations or schema experiments against the real production database — always use Testcontainers PostgreSQL.
+
+## OpenSpec workflow
+
+Changes are planned with OpenSpec (`openspec/` directory): current specs live in `openspec/specs/` and in-progress changes in `openspec/changes/` (archived under `openspec/changes/archive/`). Use the `/opsx:propose`, `/opsx:apply`, `/opsx:sync`, and `/opsx:archive` commands to propose, implement, and archive changes. When implementing, respect the requirements of the existing specs (`project-skeleton`, `shared-kernel`, `authentication`, and after F01 `user-seeding` and `network-edge`).
+
+## Conventions
+
+- Markdown documentation and OpenSpec artifacts are written in English.
+- Code identifiers (classes, methods, properties) are in English, except business domain names, routes and DTO fields, which follow the Spanish API contract in `Docs/00-contrato-y-convenciones.md`; user-facing error and validation messages are in Spanish; commit messages may be in Spanish.
+- MVP philosophy: keep scope minimal — nothing beyond the PRD.

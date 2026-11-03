@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ZoiNailAcademy.Domain/ZoiNailAcademy.Domain.csproj" />
+    <Project Path="src/ZoiNailAcademy.Application/ZoiNailAcademy.Application.csproj" />
+    <Project Path="src/ZoiNailAcademy.Infrastructure/ZoiNailAcademy.Infrastructure.csproj" />
+    <Project Path="src/ZoiNailAcademy.Host/ZoiNailAcademy.Host.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UnitTests/UnitTests.csproj" />
+    <Project Path="tests/IntegrationTests/IntegrationTests.csproj" />
+  </Folder>
+</Solution>

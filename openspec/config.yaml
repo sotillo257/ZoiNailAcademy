@@ -1,0 +1,89 @@
+schema: spec-driven
+
+# Project context shown to AI when creating artifacts.
+context: |
+  Project: Zoi Nail Academy API — backend of a course-selling website (4
+  courses with dated editions and limited seats; bookings paid with Stripe
+  Checkout or bank transfer/Bizum confirmed by hand; waiting list; backoffice).
+  Closed backoffice: users Admin (client) and SuperAdmin (developer) seeded from
+  environment variables, no registration. Product docs in Docs/: PRD.md,
+  00-contrato-y-convenciones.md (API contract: routes, DTOs, business error
+  codes, domain events — it wins over feature specs) and features/Fxx-*.md.
+  All routes under /api (global convention); backoffice under /api/admin with
+  the Backoffice/SuperAdmin policies; refresh token in an HttpOnly cookie.
+
+  Tech stack (CURRENT STATE — what actually exists in the repo today):
+  - .NET 10 / ASP.NET Core with Controllers, single host (ZoiNailAcademy.Host)
+  - 4-layer Clean Architecture: Domain → Application → Infrastructure → Host
+  - CQRS with MediatR 12.x + FluentValidation running as a pipeline behavior
+    (ValidationBehavior); Result/Result<T> pattern for expected failures
+  - EF Core 10 + Npgsql (PostgreSQL); migrations live in Infrastructure with a
+    design-time factory; enums persisted as text; audit timestamps handled in
+    SaveChanges
+  - Authentication: JWT access tokens + rotated, SHA-256-hashed refresh tokens,
+    BCrypt password hashing, global Bearer fallback policy, roles Admin and
+    SuperAdmin, reuse detection on refresh tokens
+  - Domain entities: private setters, instantiation only through static
+    Create(...) factory methods that enforce invariants, inheriting from
+    BaseAuditableEntity
+  - Data access from Application only through the IAppDbContext interface
+  - Testing: xUnit + FluentAssertions + Moq (unit), WebApplicationFactory +
+    Testcontainers.PostgreSql (integration, requires Docker)
+  - Deployment: Railway with a multi-stage Dockerfile; configuration via
+    environment variables (DATABASE_URL, PORT); GET /api/health unauthenticated;
+    API reached only through the Next.js /api rewrite over Railway's private
+    network (ForwardedHeaders for the real client IP)
+  - Clock: inject TimeProvider (never DateTime.UtcNow); DateTimeOffset (UTC)
+  - Named per-IP rate-limit policies: auth, reservas, formularios
+
+  Application layer convention for new use cases:
+  - Organize by feature, then by operation:
+      Application/
+        <Feature>/                e.g. Authentication, Ediciones
+          <Operation>/            e.g. Login, CrearEdicion
+  - Each <Operation> folder contains everything for that use case: the
+    command/query record, its handler, and its validator when applicable
+  - Do not create loose handlers outside a feature/operation folder
+  - Commands/Queries/DTOs are positional sealed records
+
+  Constraints:
+  - Migrations must NEVER be run against the real production database; migration
+    and schema testing is done exclusively against Testcontainers PostgreSQL
+  - MVP philosophy: keep scope minimal, no features beyond the PRD
+  - OpenSpec artifacts and markdown documentation in English; code identifiers
+    in English
+
+rules:
+  proposal:
+    - Write in English
+    - State the problem being solved and the user/business driver behind the change
+    - Include a "Non-goals" section listing what is explicitly out of scope
+    - Name which layers change (Domain/Application/Infrastructure/Host)
+
+  design:
+    - Write in English
+    - Document design decisions in D-XX format including rationale and alternatives considered
+    - Explicitly define aggregates, their invariants, and aggregate boundaries
+    - Design for testability — behavior must be reachable through public interfaces (HTTP endpoints, handlers) without inspecting internals
+    - Respect inward-only dependency rules — call out any new ProjectReference explicitly
+    - Justify any new NuGet dependency; default to the existing minimal stack
+    - Include request/response schemas for all endpoints, with error codes and ProblemDetails format, consistent with the API contract in Docs/00-contrato-y-convenciones.md
+    - Include a Risks/Trade-offs section
+
+  specs:
+    - Write in English, using the SHALL/MUST/MUST NOT keywords
+    - Express behavior as observable outcomes (requests, responses, state transitions), not implementation details
+    - Each requirement must have at least one verifiable scenario; non-trivial requirements should cover happy path, edge case, and error/validation case
+    - Each scenario must state the test type that verifies it — [UNIT] or [INTEGRATION]
+    - Domain invariants are specified as [UNIT] scenarios on the entity/aggregate
+    - When a change touches a state machine, cover every transition it modifies AND the rejection of invalid transitions
+
+  tasks:
+    - Write in English
+    - Order tasks as vertical slices — a failing test first, then the minimal code to make it pass; never list all tests first and all implementation after
+    - Every implementation task must be preceded by its test-writing task
+    - Break tasks into small, independently verifiable chunks
+    - Layer order — Domain first (with its tests), then Application, then Infrastructure/Host
+    - Every task must leave the solution building and the tests green (dotnet build / dotnet test)
+    - Mark tasks requiring a live environment (Railway, real frontend) with the [MANUAL] prefix
+    - Every feature ends with an integration test task using Testcontainers
