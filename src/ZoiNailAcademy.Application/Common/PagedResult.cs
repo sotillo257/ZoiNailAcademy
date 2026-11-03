@@ -1,3 +1,4 @@
 namespace ZoiNailAcademy.Application.Common;
 
-public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
+/// <summary>A page of a listing: JSON <c>{ items, total, page, pageSize }</c>.</summary>
+public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
