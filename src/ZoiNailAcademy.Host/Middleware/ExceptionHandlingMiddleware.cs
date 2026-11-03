@@ -34,11 +34,15 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
             NotFoundException notFoundEx => (
                 HttpStatusCode.NotFound,
-                CreateProblemDetails(HttpStatusCode.NotFound, notFoundEx.Message)),
+                CreateProblemDetails(HttpStatusCode.NotFound, notFoundEx.Message, ErrorCodes.NoEncontrado)),
 
             ConflictException conflictEx => (
                 HttpStatusCode.Conflict,
-                CreateProblemDetails(HttpStatusCode.Conflict, conflictEx.Message)),
+                CreateProblemDetails(HttpStatusCode.Conflict, conflictEx.Message, conflictEx.Code, conflictEx.Extensions)),
+
+            BusinessRuleException businessEx => (
+                HttpStatusCode.Conflict,
+                CreateProblemDetails(HttpStatusCode.Conflict, businessEx.Message, businessEx.Code, businessEx.Extensions)),
 
             UnauthorizedException unauthorizedEx => (
                 HttpStatusCode.Unauthorized,
@@ -65,12 +69,33 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             problemDetails, problemDetails.GetType(), options: null, contentType: "application/problem+json");
     }
 
-    private static ProblemDetails CreateProblemDetails(HttpStatusCode statusCode, string detail) => new()
+    /// <summary>
+    /// Business errors carry the contract's <c>code</c> plus any extra values (e.g. <c>ocupadas</c>);
+    /// ASP.NET Core serializes <see cref="ProblemDetails.Extensions"/> at the top level of the JSON.
+    /// </summary>
+    private static ProblemDetails CreateProblemDetails(
+        HttpStatusCode statusCode, string detail, string? code = null,
+        IReadOnlyDictionary<string, object?>? extensions = null)
     {
-        Status = (int)statusCode,
-        Title = statusCode.ToString(),
-        Detail = detail
-    };
+        var problemDetails = new ProblemDetails
+        {
+            Status = (int)statusCode,
+            Title = statusCode.ToString(),
+            Detail = detail
+        };
+
+        if (code is not null)
+        {
+            problemDetails.Extensions["code"] = code;
+        }
+
+        foreach (var (key, value) in extensions ?? new Dictionary<string, object?>())
+        {
+            problemDetails.Extensions[key] = value;
+        }
+
+        return problemDetails;
+    }
 
     private (HttpStatusCode, ProblemDetails) LogAndCreateInternalError(Exception exception)
     {

@@ -2,6 +2,7 @@ using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Infrastructure.Authentication;
 using ZoiNailAcademy.Infrastructure.Data;
 using ZoiNailAcademy.Infrastructure.Data.Seeding;
+using ZoiNailAcademy.Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,10 @@ public static class DependencyInjection
         services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
         services.Configure<SuperAdminSeedOptions>(configuration.GetSection(SuperAdminSeedOptions.SectionName));
         services.AddScoped<UserSeeder>();
+        services.AddScoped<CursoSeeder>();
+
+        services.Configure<ReservasOptions>(configuration.GetSection(ReservasOptions.SectionName));
+        services.AddSingleton<IReservasSettings, ReservasSettings>();
 
         services.AddSingleton<IAuthTokenSettings, AuthTokenSettings>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();

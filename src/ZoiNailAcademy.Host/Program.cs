@@ -128,6 +128,8 @@ using (var scope = app.Services.CreateScope())
 
     var seeder = scope.ServiceProvider.GetRequiredService<UserSeeder>();
     await seeder.SeedAsync(app.Environment.IsProduction());
+
+    await scope.ServiceProvider.GetRequiredService<CursoSeeder>().SeedAsync();
 }
 
 if (forwardedHeadersSettings.TrustsAnyProxy)

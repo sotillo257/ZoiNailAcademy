@@ -19,6 +19,8 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<Authentication.AuthTokenIssuer>();
+        services.AddScoped<Common.Interfaces.IOcupacionReader, Ediciones.OcupacionReader>();
+        services.AddScoped<Ediciones.EdicionesPublicas>();
 
         return services;
     }

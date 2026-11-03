@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
+using MediatR;
+using ZoiNailAcademy.Application.Common.Interfaces;
+using ZoiNailAcademy.Application.Ediciones;
 using Testcontainers.PostgreSql;
 using ZoiNailAcademy.Infrastructure.Data;
 
@@ -58,6 +61,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddSingleton<TimeProvider>(Clock);
             services.AddTransient<IStartupFilter, ProtectedTestEndpointStartupFilter>();
             services.AddControllers().AddApplicationPart(typeof(TestAdminController).Assembly);
+
+            services.AddScoped<OcupacionReader>();
+            services.AddScoped<IOcupacionReader, TestOcupacionReader>();
+            services.AddTransient<INotificationHandler<EdicionPublicadaEvent>, RecordingEdicionPublicadaHandler>();
         });
     }
 }
