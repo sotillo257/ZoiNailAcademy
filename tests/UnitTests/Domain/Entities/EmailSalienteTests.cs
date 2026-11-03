@@ -76,4 +76,17 @@ public class EmailSalienteTests
         var act = () => email.MarcarEnviado("re_456", Now);
         act.Should().Throw<DomainException>();
     }
+
+    [Fact]
+    public void Create_WithUnsubscribeUrl_StoresItAndRejectsAnInvalidOne()
+    {
+        EmailSaliente.Create("a@b.c", null, "Asunto", "h", "t", "Tipo", null, Now, " https://web.test/api/lista-espera/baja?token=abc ")
+            .BajaUrl.Should().Be("https://web.test/api/lista-espera/baja?token=abc");
+        Email().BajaUrl.Should().BeNull();
+
+        var relativa = () => EmailSaliente.Create("a@b.c", null, "Asunto", "h", "t", "Tipo", null, Now, "/baja?token=abc");
+        var larga = () => EmailSaliente.Create("a@b.c", null, "Asunto", "h", "t", "Tipo", null, Now, "https://web.test/" + new string('a', 500));
+        relativa.Should().Throw<DomainException>();
+        larga.Should().Throw<DomainException>();
+    }
 }

@@ -112,6 +112,12 @@ public class ListaEspera : BaseAuditableEntity
         Contactado = contactado;
     }
 
+    /// <summary>
+    /// The person no longer wants the automatic emails about new dates of this course (F11). Unsubscribing
+    /// again keeps the first moment. The client can still call them: only the automatic email stops.
+    /// </summary>
+    public void DarDeBaja(DateTimeOffset now) => BajaEn ??= now.ToUniversalTime();
+
     public void CambiarNotas(string? notas)
     {
         var normalizadas = string.IsNullOrWhiteSpace(notas) ? null : notas.Trim();

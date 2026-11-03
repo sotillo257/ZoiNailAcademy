@@ -127,4 +127,55 @@ public class PlantillasEmailTests
         EmailFormato.FechaCorta(Inicio, Madrid).Should().Be("05/12/2026");
         EmailFormato.Importe(1149.5m).Should().Be("1149,50 €".Replace("1149", "1.149"));
     }
+
+    private static AvisoNuevasEdicionesModelo Aviso(string nombre = "Lucía Pérez") => new(
+        "Acrílico", "acrilico", nombre, [new(Inicio.AddDays(14), 1), new(Inicio, 6)], "tok_En-123");
+
+    [Fact]
+    public void AvisoNuevasEdiciones_ListsTheDatesWithSeatsBookingButtonAndUnsubscribeLink()
+    {
+        var email = AvisoNuevasEdicionesEmail.Crear(Aviso(), Marca);
+
+        email.Asunto.Should().Be("Nuevas fechas para Acrílico");
+        foreach (var version in new[] { email.Html, email.Texto })
+        {
+            version.Should().Contain("Hola, Lucía Pérez. Hay nuevas fechas para Acrílico:")
+                .And.Contain("sábado, 5 de diciembre de 2026, 10:00").And.Contain("Quedan 6 plazas")
+                .And.Contain("sábado, 19 de diciembre de 2026, 10:00").And.Contain("Queda 1 plaza")
+                .And.Contain("pueden agotarse")
+                .And.Contain("https://web.test/reservar/acrilico")
+                .And.Contain("te apuntaste a la lista de espera de Acrílico")
+                .And.Contain("Darme de baja de los avisos de Acrílico");
+        }
+
+        email.Html.Should().Contain("https://web.test/baja?token=tok_En-123&amp;curso=acrilico");
+        email.Texto.Should().Contain("https://web.test/baja?token=tok_En-123&curso=acrilico").And.NotContain("<");
+        email.Html.IndexOf("5 de diciembre", StringComparison.Ordinal)
+            .Should().BeLessThan(email.Html.IndexOf("19 de diciembre", StringComparison.Ordinal), "dates are sorted");
+        AvisoNuevasEdicionesEmail.UrlBajaUnClic(Marca, "tok_En-123")
+            .Should().Be("https://web.test/api/lista-espera/baja?token=tok_En-123");
+    }
+
+    [Fact]
+    public void AvisoNuevasEdiciones_EscapesTheNameAndUsesTheSingularForOneDate()
+    {
+        var email = AvisoNuevasEdicionesEmail.Crear(
+            Aviso("<b>Ana</b>") with { Fechas = [new(Inicio, 3)] }, Marca);
+
+        email.Html.Should().NotContain("<b>Ana</b>").And.Contain("&lt;b&gt;Ana&lt;/b&gt;");
+        email.Texto.Should().Contain("Hay una nueva fecha para Acrílico:");
+    }
+
+    [Theory]
+    [InlineData(1, "Aviso enviado a 1 interesado · Acrílico")]
+    [InlineData(12, "Aviso enviado a 12 interesados · Acrílico")]
+    public void AvisoNuevasEdicionesClienta_SummarizesHowManyPeopleWereEmailed(int interesados, string asunto)
+    {
+        var email = AvisoNuevasEdicionesClientaEmail.Crear(
+            new AvisoNuevasEdicionesClientaModelo("Acrílico", interesados, [new(Inicio, 6)]), Marca);
+
+        email.Asunto.Should().Be(asunto);
+        email.Texto.Should().Contain("sábado, 5 de diciembre de 2026, 10:00").And.Contain("6 libres")
+            .And.Contain("https://web.test/admin/lista-espera").And.NotContain("baja?token");
+    }
 }

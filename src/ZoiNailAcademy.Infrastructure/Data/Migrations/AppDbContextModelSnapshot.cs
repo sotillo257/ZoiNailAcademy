@@ -22,6 +22,41 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.AvisoEnviado", b =>
+                {
+                    b.Property<Guid>("ListaEsperaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EdicionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EncoladoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ListaEsperaId", "EdicionId");
+
+                    b.HasIndex("EdicionId");
+
+                    b.ToTable("AvisosEnviados", (string)null);
+                });
+
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.AvisoPendiente", b =>
+                {
+                    b.Property<Guid>("CursoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("PendienteDesde")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Publicaciones")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.HasKey("CursoId");
+
+                    b.ToTable("AvisosPendientes", (string)null);
+                });
+
             modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.Curso", b =>
                 {
                     b.Property<Guid>("Id")
@@ -137,6 +172,10 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<string>("BajaUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -497,6 +536,30 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.AvisoEnviado", b =>
+                {
+                    b.HasOne("ZoiNailAcademy.Domain.Entities.Edicion", null)
+                        .WithMany()
+                        .HasForeignKey("EdicionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZoiNailAcademy.Domain.Entities.ListaEspera", null)
+                        .WithMany()
+                        .HasForeignKey("ListaEsperaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.AvisoPendiente", b =>
+                {
+                    b.HasOne("ZoiNailAcademy.Domain.Entities.Curso", null)
+                        .WithMany()
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.Edicion", b =>

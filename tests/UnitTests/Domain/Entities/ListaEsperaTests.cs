@@ -121,4 +121,18 @@ public class ListaEsperaTests
         var act = () => entrada.CambiarNotas(new string('a', ListaEspera.NotasMaxLength + 1));
         act.Should().Throw<DomainException>();
     }
+
+    [Fact]
+    public void DarDeBaja_SetsTheMomentOnceAndASignUpAgainClearsIt()
+    {
+        var entrada = Entrada();
+
+        entrada.DarDeBaja(Now);
+        entrada.DarDeBaja(Now.AddDays(1));
+
+        entrada.BajaEn.Should().Be(Now);
+
+        entrada.ActualizarAlta(null, null, "José", "+34612345678", "Texto", Now.AddDays(2));
+        entrada.BajaEn.Should().BeNull();
+    }
 }

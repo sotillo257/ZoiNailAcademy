@@ -27,6 +27,8 @@ public class PrevisualizarEmailHandler(BandejaSalida bandeja, ReservaPublicaDtoF
         var contacto = new ContactoEmailModelo(
             "Lucía Pérez", "lucia@example.com", "+34612345678", "Hola, ¿el curso incluye el material?\nGracias.");
 
+        var fechas = new List<FechaAvisoModelo> { new(reserva.Inicio, 8), new(reserva.Inicio.AddDays(14), 2) };
+
         var contenido = request.Tipo switch
         {
             TiposEmail.ReservaPagadaComprador => ReservaPagadaCompradorEmail.Crear(reserva, marca),
@@ -40,6 +42,10 @@ public class PrevisualizarEmailHandler(BandejaSalida bandeja, ReservaPublicaDtoF
                 marca),
             TiposEmail.ContactoClienta => ContactoClientaEmail.Crear(contacto, marca),
             TiposEmail.ContactoAcuse => ContactoAcuseEmail.Crear(contacto, marca),
+            TiposEmail.AvisoNuevasEdiciones => AvisoNuevasEdicionesEmail.Crear(
+                new AvisoNuevasEdicionesModelo(reserva.Curso, reserva.CursoSlug, "Lucía Pérez", fechas, "token-de-ejemplo"), marca),
+            TiposEmail.AvisoNuevasEdicionesClienta => AvisoNuevasEdicionesClientaEmail.Crear(
+                new AvisoNuevasEdicionesClientaModelo(reserva.Curso, 12, fechas), marca),
             _ => throw new NotFoundException("Tipo de email", request.Tipo)
         };
 

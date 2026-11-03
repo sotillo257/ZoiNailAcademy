@@ -229,6 +229,22 @@ public class EnviarEmailsPendientesHandlerTests
     }
 
     [Fact]
+    public async Task Handle_EmailWithUnsubscribeUrl_HandsItToTheProvider()
+    {
+        var aviso = EmailSaliente.Create(
+            "a@mail.com", null, "Asunto", "<p>x</p>", "x", TiposEmail.AvisoNuevasEdiciones, Guid.NewGuid(), CatalogoFactory.Now,
+            "https://web.test/api/lista-espera/baja?token=abc");
+        _ctx.SetupEmails(aviso);
+        _sender.Setup(x => x.EnviarAsync(It.IsAny<EmailMensaje>(), It.IsAny<CancellationToken>())).ReturnsAsync("re_1");
+
+        await Handler().Handle(new EnviarEmailsPendientesCommand(), CancellationToken.None);
+
+        _sender.Verify(x => x.EnviarAsync(
+            It.Is<EmailMensaje>(m => m.BajaUrl == "https://web.test/api/lista-espera/baja?token=abc"), It.IsAny<CancellationToken>()),
+            Times.Once());
+    }
+
+    [Fact]
     public async Task Handle_LockHeldByAnotherReplica_SendsNothing()
     {
         _ctx.SetupEmails(Pendiente());

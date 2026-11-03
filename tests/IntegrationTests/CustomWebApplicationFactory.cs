@@ -56,7 +56,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     private static void RemoveBackgroundJobs(IServiceCollection services)
     {
         var job = services.Where(d => d.ServiceType == typeof(IHostedService)
-            && (d.ImplementationType == typeof(ExpirarReservasJob) || d.ImplementationType == typeof(EnviarEmailsJob))).ToList();
+            && (d.ImplementationType == typeof(ExpirarReservasJob) || d.ImplementationType == typeof(EnviarEmailsJob)
+                || d.ImplementationType == typeof(AvisosNuevasEdicionesJob))).ToList();
         foreach (var descriptor in job)
         {
             services.Remove(descriptor);
@@ -118,7 +119,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddTransient<INotificationHandler<ListaEsperaAltaEvent>, RecordingHandler<ListaEsperaAltaEvent>>();
 
             // The expiry job is started explicitly by the tests that need it (CreateHost(conJob: true)), and the
-            // outbox is sent by the email tests through the command, so neither runs behind unrelated tests.
+            // outbox and the new-dates notices are run by their tests through the command, so none of them runs behind
+            // unrelated tests.
             RemoveBackgroundJobs(services);
         });
     }

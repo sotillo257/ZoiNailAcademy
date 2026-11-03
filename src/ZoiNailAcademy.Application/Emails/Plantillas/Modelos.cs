@@ -24,3 +24,13 @@ public sealed record ListaEsperaEmailModelo(
     string Curso, string Nombre, string Email, string Telefono, string? FechaPreferida, DateTimeOffset? EdicionPreferida);
 
 public sealed record ContactoEmailModelo(string Nombre, string Email, string? Telefono, string Mensaje);
+
+/// <summary>A date of a new-dates notice, with the free seats when the email was enqueued.</summary>
+public sealed record FechaAvisoModelo(DateTimeOffset Inicio, int PlazasLibres);
+
+/// <param name="BajaToken">The person's unsubscribe token for this course (<c>ListaEspera.BajaToken</c>).</param>
+public sealed record AvisoNuevasEdicionesModelo(
+    string Curso, string CursoSlug, string Nombre, IReadOnlyList<FechaAvisoModelo> Fechas, string BajaToken);
+
+/// <param name="Interesados">People of the waiting list that were emailed.</param>
+public sealed record AvisoNuevasEdicionesClientaModelo(string Curso, int Interesados, IReadOnlyList<FechaAvisoModelo> Fechas);

@@ -2,7 +2,12 @@ namespace ZoiNailAcademy.Application.Common.Interfaces;
 
 /// <summary>An email of the outbox, ready to hand to the provider.</summary>
 /// <param name="Id">Outbox id, used as the provider's idempotency key.</param>
-public sealed record EmailMensaje(Guid Id, string Para, string? ReplyTo, string Asunto, string Html, string Texto, string Tipo);
+/// <param name="BajaUrl">
+/// One-click unsubscribe URL: the provider sends it as <c>List-Unsubscribe</c> plus
+/// <c>List-Unsubscribe-Post: List-Unsubscribe=One-Click</c>. Null for transactional emails.
+/// </param>
+public sealed record EmailMensaje(
+    Guid Id, string Para, string? ReplyTo, string Asunto, string Html, string Texto, string Tipo, string? BajaUrl = null);
 
 /// <summary>Sends one email (Resend, or the log when Resend is not configured). Only the outbox job calls it.</summary>
 public interface IEmailSender

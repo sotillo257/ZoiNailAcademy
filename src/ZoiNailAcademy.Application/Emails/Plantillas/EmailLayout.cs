@@ -16,7 +16,8 @@ public static class EmailLayout
     /// <summary>Logo served by the front (absolute URL built from <c>App:BaseUrl</c>).</summary>
     public const string RutaLogo = "/email/logo.png";
 
-    public static EmailContenido Componer(EmailMarca marca, string asunto, EmailCuerpo cuerpo)
+    /// <param name="baja">Unsubscribe link shown in the footer (automatic emails the person can stop receiving).</param>
+    public static EmailContenido Componer(EmailMarca marca, string asunto, EmailCuerpo cuerpo, EnlaceBaja? baja = null)
     {
         var nombre = EmailCuerpo.Encode(marca.NombreAcademia);
         var direccion = string.IsNullOrWhiteSpace(marca.Direccion)
@@ -25,6 +26,10 @@ public static class EmailLayout
         var legales =
             $"<a href=\"{EmailCuerpo.Encode(marca.Url("/aviso-legal"))}\" style=\"color:{ColorSecundario};\">Aviso legal</a> · " +
             $"<a href=\"{EmailCuerpo.Encode(marca.Url("/privacidad"))}\" style=\"color:{ColorSecundario};\">Privacidad</a>";
+
+        var bajaHtml = baja is null
+            ? string.Empty
+            : $"<br><a href=\"{EmailCuerpo.Encode(baja.Url)}\" style=\"color:{ColorSecundario};\">{EmailCuerpo.Encode(baja.Texto)}</a>";
 
         var html =
             "<!DOCTYPE html><html lang=\"es\"><head><meta charset=\"utf-8\">" +
@@ -38,15 +43,19 @@ public static class EmailLayout
             "</td></tr>" +
             $"<tr><td style=\"padding:24px;font-family:Arial,Helvetica,sans-serif;color:{ColorTexto};\">{cuerpo.Html}</td></tr>" +
             $"<tr><td align=\"center\" style=\"padding:16px 24px 24px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:{ColorSecundario};border-top:1px solid #eeeeee;\">" +
-            $"{nombre}{direccion}<br>{legales}</td></tr>" +
+            $"{nombre}{direccion}<br>{legales}{bajaHtml}</td></tr>" +
             "</table></td></tr></table></body></html>";
 
         var pie = string.IsNullOrWhiteSpace(marca.Direccion)
             ? marca.NombreAcademia
             : $"{marca.NombreAcademia}\n{marca.Direccion}";
+        var bajaTexto = baja is null ? string.Empty : $"{baja.Texto}: {baja.Url}\n";
         var texto =
-            $"{cuerpo.Texto}\n--\n{pie}\nAviso legal: {marca.Url("/aviso-legal")}\nPrivacidad: {marca.Url("/privacidad")}\n";
+            $"{cuerpo.Texto}\n--\n{pie}\nAviso legal: {marca.Url("/aviso-legal")}\nPrivacidad: {marca.Url("/privacidad")}\n{bajaTexto}";
 
         return new EmailContenido(asunto, html, texto);
     }
 }
+
+/// <summary>Footer link to stop receiving an automatic email.</summary>
+public sealed record EnlaceBaja(string Texto, string Url);
