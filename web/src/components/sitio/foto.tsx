@@ -38,7 +38,7 @@ export function Foto({
     >
       {icono ? <CameraIcon className="mb-2 size-7 text-[#6b6766]" strokeWidth={1.5} aria-hidden /> : null}
       <span className="text-xs font-semibold text-[#4d4948]">{alt}</span>
-      {nota ? <span className="text-[11px] text-[#7a7574]">{nota}</span> : null}
+      {nota ? <span className="text-[11px] text-[#5f5a59]">{nota}</span> : null}
     </div>
   );
 }

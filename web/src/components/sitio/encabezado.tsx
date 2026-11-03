@@ -63,7 +63,7 @@ export function Encabezado({ aviso }: { aviso: Aviso }) {
       </div>
       <div className="border-b border-z-line bg-white">
         <div className="mx-auto flex h-16 max-w-[1100px] items-center justify-between gap-6 px-[18px] md:h-[84px] md:px-6 xl:px-0">
-          <Link href="/" className="flex items-center gap-3" aria-label={`${SITIO.nombre}, inicio`}>
+          <Link href="/" className="flex items-center gap-3">
             <LogoZ className="size-9 text-base md:size-11 md:text-lg" />
             <span className="leading-tight">
               <span className="block text-[15px] font-bold text-z-ink md:text-base">{SITIO.nombre}</span>

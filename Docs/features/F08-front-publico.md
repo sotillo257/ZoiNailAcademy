@@ -3,6 +3,18 @@
 **Revisión línea a línea:** No (revisión visual contra el Figma en escritorio y móvil).
 **Depende de:** contrato de la API (puede empezar en paralelo a F02–F06 con mocks generados desde el Swagger).
 
+## Decisiones al implementar con el diseño aprobado (03/11/2026)
+
+El diseño final es la web personal de Zoila Buzetta (no solo una portada de cursos). Donde el diseño y esta spec no coinciden, manda el diseño:
+
+- **Páginas:** Inicio (`/`), Formaciones presenciales (`/formaciones`), Contacto y el flujo de reserva en dos pasos. "Academia online", "Spa" y "Reservar cita" son **enlaces externos** (`web/src/lib/sitio/datos.ts`).
+- **Sin página de detalle por curso** (`/cursos/[slug]` no existe): cada formación se presenta en `/formaciones` y "Reservar plaza" lleva a `/reservar/[slug]`. El JSON-LD `Course`/`CourseInstance` va en `/formaciones`.
+- **Calendario:** la tabla "Calendario de Clases 2027" (tarjetas en móvil) y el desplegable "Edición" del formulario sustituyen al calendario mensual (sin FullCalendar).
+- **Lista de espera** dentro de `/formaciones#lista-espera` (no hay `/lista-espera`): `?curso=&edicion=` la preselecciona.
+- **Señal (F12):** cada curso muestra "Precio total" y "Reserva de plaza"; se cobra la reserva y el resto se paga en persona.
+- Concepto de la transferencia = **código de reserva** (no "nombre + curso" como en el diseño), para cuadrar pagos en el backoffice.
+- Contacto: "¿Sobre qué nos escribes?" no existe en la API; viaja al principio del mensaje (`[Asunto] …`).
+
 ## Objetivo
 
 Maquetar la web pública según el Figma (escritorio y móvil con layouts propios) y conectar el flujo completo: ver cursos → elegir fecha en el calendario → pagar con tarjeta o transferencia/Bizum → confirmación; más lista de espera y contacto.
