@@ -21,6 +21,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Edicion> Ediciones => Set<Edicion>();
     public DbSet<Reserva> Reservas => Set<Reserva>();
     public DbSet<StripeEvento> StripeEventos => Set<StripeEvento>();
+    public DbSet<ListaEspera> ListaEspera => Set<ListaEspera>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
         Database.BeginTransactionAsync(cancellationToken);

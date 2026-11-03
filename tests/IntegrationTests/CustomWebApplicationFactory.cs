@@ -8,6 +8,7 @@ using Microsoft.Extensions.Time.Testing;
 using MediatR;
 using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Application.Ediciones;
+using ZoiNailAcademy.Application.ListasEspera;
 using ZoiNailAcademy.Application.Reservas;
 using ZoiNailAcademy.Host.Jobs;
 using Microsoft.Extensions.Hosting;
@@ -109,6 +110,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddTransient<INotificationHandler<PagoTrasCaducidadSinPlazaEvent>, RecordingHandler<PagoTrasCaducidadSinPlazaEvent>>();
             services.AddTransient<INotificationHandler<ReservaManualCreadaEvent>, RecordingHandler<ReservaManualCreadaEvent>>();
             services.AddTransient<INotificationHandler<ReservaCanceladaEvent>, RecordingHandler<ReservaCanceladaEvent>>();
+            services.AddTransient<INotificationHandler<ListaEsperaAltaEvent>, RecordingHandler<ListaEsperaAltaEvent>>();
 
             // The expiry job is started explicitly by the tests that need it (CreateHost(conJob: true)),
             // so it never runs in the background of unrelated tests.

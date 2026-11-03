@@ -24,6 +24,7 @@ public class CatalogoTestContext
     public Dictionary<Guid, Ocupacion> Ocupaciones { get; } = [];
     public List<Reserva> Reservas { get; private set; } = [];
     public List<StripeEvento> StripeEventos { get; private set; } = [];
+    public List<ListaEspera> ListaEspera { get; private set; } = [];
     public Mock<IDbContextTransaction> Transaction { get; } = new();
     public Mock<IAppSettings> AppSettings { get; } = new();
     public Mock<IPagoSettings> Pago { get; } = new();
@@ -52,6 +53,15 @@ public class CatalogoTestContext
         SetupEdiciones();
         SetupReservas();
         SetupStripeEventos();
+        SetupListaEspera();
+    }
+
+    public void SetupListaEspera(params ListaEspera[] entradas)
+    {
+        ListaEspera = entradas.ToList();
+        var mockSet = ListaEspera.BuildMockDbSet();
+        mockSet.Setup(x => x.Add(It.IsAny<ListaEspera>())).Callback<ListaEspera>(ListaEspera.Add);
+        DbContext.Setup(x => x.ListaEspera).Returns(mockSet.Object);
     }
 
     public void SetupReservas(params Reserva[] reservas)

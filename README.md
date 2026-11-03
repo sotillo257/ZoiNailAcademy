@@ -85,6 +85,17 @@ Nunca se vende más de una plaza de las que hay: cada reserva bloquea la fila de
 
 Las acciones responden `{reserva, avisos}` y exigen el `version` leído (409 `concurrencia` si el job u otra persona la cambió). Un job en segundo plano (`Reservas__JobIntervaloMinutos`) expira las pendientes vencidas con un advisory lock de PostgreSQL, así que es seguro con varias réplicas; aunque vaya con retraso, la plaza vuelve al calendario en cuanto pasa `ExpiraEn`. Cancelar una edición cancela sus reservas pendientes.
 
+### Lista de espera (F05)
+
+| Método | Ruta | Auth | Descripción |
+| --- | --- | --- | --- |
+| POST | `/api/lista-espera` | No (rate limit `formularios`) | `{cursoId, edicionPreferidaId?, fechaPreferida?, nombre, email, telefono, aceptaPrivacidad, website}` → 201 sin body |
+| GET | `/api/admin/lista-espera?cursoId=&contactado=&q=&page=&pageSize=` | Backoffice | `{items, total, page, pageSize}` (50 por defecto, máximo 200); no contactados primero y, dentro, los que más esperan |
+| PUT | `/api/admin/lista-espera/{id}/contactado` | Backoffice | `{contactado, notas?}` → `ListaEsperaAdminDto` (sin `notas`, se conservan) |
+| GET | `/api/admin/lista-espera.csv?cursoId=` | Backoffice | CSV para Excel: UTF-8 con BOM, `;`, fechas en hora de Madrid, `lista-espera-{slug}-{yyyyMMdd}.csv` |
+
+El mismo email en el mismo curso actualiza el registro (vuelve a "no contactado") y responde igual que un alta nueva. El texto de consentimiento que se guarda es la constante versionada del backend (`ConsentimientoListaEspera.V1`, también cubre el aviso por email de nuevas fechas de F11), no el que envía el front. `q` busca en nombre, email y teléfono sin distinguir mayúsculas ni acentos (`Jose` encuentra `José`). El CSV antepone `'` a los campos que empiezan por `=`, `+`, `-` o `@` para que Excel no los ejecute como fórmulas (por eso el teléfono sale como `'+34…`).
+
 `/api/auth/register` no existe. Los controllers de `/api/admin/**` llevan `[Authorize(Policy = AuthorizationPolicies.Backoffice)]` a nivel de clase (y `SuperAdmin` en las acciones del desarrollador); un test de integración recorre esas rutas dinámicamente y falla si alguna queda abierta.
 
 ## Configuración

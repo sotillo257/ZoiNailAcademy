@@ -127,6 +127,89 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                     b.ToTable("Ediciones", (string)null);
                 });
 
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.ListaEspera", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("BajaEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BajaToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Busqueda")
+                        .IsRequired()
+                        .HasMaxLength(342)
+                        .HasColumnType("character varying(342)");
+
+                    b.Property<DateTimeOffset>("ConsentimientoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Contactado")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ContactadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CursoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("EdicionPreferidaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FechaPreferida")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Notas")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Telefono")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TextoConsentimiento")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BajaToken")
+                        .IsUnique();
+
+                    b.HasIndex("EdicionPreferidaId");
+
+                    b.HasIndex("Contactado", "CreatedAt");
+
+                    b.HasIndex("CursoId", "Email")
+                        .IsUnique();
+
+                    b.ToTable("ListaEspera", (string)null);
+                });
+
             modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -345,6 +428,24 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Curso");
+                });
+
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.ListaEspera", b =>
+                {
+                    b.HasOne("ZoiNailAcademy.Domain.Entities.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZoiNailAcademy.Domain.Entities.Edicion", "EdicionPreferida")
+                        .WithMany()
+                        .HasForeignKey("EdicionPreferidaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("EdicionPreferida");
                 });
 
             modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.RefreshToken", b =>
