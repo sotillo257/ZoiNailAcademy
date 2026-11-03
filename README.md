@@ -35,7 +35,9 @@ dotnet test tests/UnitTests          # unitarios
 dotnet test tests/IntegrationTests   # integración (requiere Docker)
 ```
 
-## Endpoints (F01)
+## Endpoints
+
+### Auth y sistema (F01)
 
 | Método | Ruta | Auth | Descripción |
 | --- | --- | --- | --- |
@@ -46,6 +48,20 @@ dotnet test tests/IntegrationTests   # integración (requiere Docker)
 | GET | `/api/auth/me` | Bearer | Usuario actual `{id, email, nombre, rol}` |
 | POST | `/api/auth/cambiar-password` | Bearer | `{passwordActual, passwordNueva}` → 204; cierra las demás sesiones |
 | GET | `/api/_diag/ip` | No | Solo con `Diag__Enabled=true`: IP vista por la API y cabeceras `X-Forwarded-*` |
+
+### Cursos y ediciones (F02)
+
+| Método | Ruta | Auth | Descripción |
+| --- | --- | --- | --- |
+| GET | `/api/cursos` | No | Cursos activos por `orden`, con `proximaEdicion` |
+| GET | `/api/cursos/{slug}` | No | Detalle con las ediciones visibles; 404 si no existe o está inactivo |
+| GET | `/api/cursos/{slug}/ediciones` | No | Calendario con plazas libres (`Cache-Control: no-store`) |
+| GET | `/api/admin/cursos` | Backoffice | `{id, nombre, slug, activo}[]` para selectores |
+| POST / PUT / DELETE | `/api/admin/cursos[/{id}]` | SuperAdmin | CRUD de cursos; `DELETE` desactiva (409 `curso_con_ediciones` si hay ediciones futuras programadas) |
+| GET | `/api/admin/ediciones?cursoId=&incluirPasadas=` | Backoffice | Ediciones con pagadas, pendientes, libres, `reservable` y `version` |
+| GET / POST / PUT / DELETE | `/api/admin/ediciones[/{id}]` | Backoffice | CRUD de ediciones; `PUT` exige el `version` leído (409 `concurrencia`) |
+
+Los errores de negocio son `409` con `code` (y datos extra como `ocupadas` o `reservas`) en el `ProblemDetails`; ver la tabla de códigos en `Docs/00-contrato-y-convenciones.md`. Los 4 cursos iniciales se siembran al arrancar desde `src/ZoiNailAcademy.Infrastructure/Data/Seed/cursos.json` (solo si no existe el slug; nunca se sobrescriben). Hasta F03 no hay reservas, así que las plazas libres son las totales: el único punto que cambia F03 es `OcupacionReader`.
 
 `/api/auth/register` no existe. Los controllers de `/api/admin/**` llevan `[Authorize(Policy = AuthorizationPolicies.Backoffice)]` a nivel de clase (y `SuperAdmin` en las acciones del desarrollador); un test de integración recorre esas rutas dinámicamente y falla si alguna queda abierta.
 
@@ -66,6 +82,9 @@ Lista completa con ejemplos en [`.env.example`](.env.example). Toda variable nue
 | `RateLimit__{Auth,Reservas,Formularios}__PermitLimit` / `__Window` | Límites por IP (por defecto 10/5 min, 10/10 min, 5/10 min) |
 | `ForwardedHeaders__ForwardLimit`, `ForwardedHeaders__KnownNetworks__N` | Proxies de confianza (ver abajo) |
 | `Diag__Enabled` | Activa temporalmente `/api/_diag/ip` |
+| `Reservas__CierreHorasAntes` | Horas antes del inicio en que se cierran las reservas y la edición deja de verse en la web (24) |
+| `Reservas__UmbralUltimasPlazas` | Plazas libres a partir de las cuales se muestra «últimas plazas» (3) |
+| `App__TimeZone` | Zona horaria de presentación (`Europe/Madrid`); la API guarda y devuelve UTC |
 | `Swagger__EnableInProduction` | `true` para exponer Swagger temporalmente en producción |
 
 CORS solo se configura en `Development` (`Cors:AllowedOrigins`): en producción el navegador habla con Next y Next reenvía `/api/*` por la red privada, así que todo es mismo origen.

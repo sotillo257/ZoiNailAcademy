@@ -124,7 +124,7 @@ Orden: próximas primero; pasadas al final si `incluirPasadas=true`.
 
 ## Seed de cursos
 
-- `src/Plantilla.Infrastructure/Data/Seed/cursos.json` con los 4 cursos.
+- `src/ZoiNailAcademy.Infrastructure/Data/Seed/cursos.json` (recurso embebido) con los 4 cursos.
 - Se insertan si no existe un curso con ese `Slug`. No se sobrescriben (el SuperAdmin puede editarlos después).
 - Los textos los aporta la clienta; mientras tanto, placeholders marcados con `[PENDIENTE]`.
 

@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "curso-1",
+    "nombre": "[PENDIENTE] Curso 1",
+    "descripcionCorta": "[PENDIENTE] Descripción corta del curso 1.",
+    "descripcion": "[PENDIENTE] Descripción completa del curso 1 (markdown).",
+    "precio": 100.00,
+    "imagen": "/cursos/curso-1.jpg",
+    "ubicacion": null,
+    "duracionTexto": null,
+    "activo": true,
+    "orden": 1
+  },
+  {
+    "slug": "curso-2",
+    "nombre": "[PENDIENTE] Curso 2",
+    "descripcionCorta": "[PENDIENTE] Descripción corta del curso 2.",
+    "descripcion": "[PENDIENTE] Descripción completa del curso 2 (markdown).",
+    "precio": 100.00,
+    "imagen": "/cursos/curso-2.jpg",
+    "ubicacion": null,
+    "duracionTexto": null,
+    "activo": true,
+    "orden": 2
+  },
+  {
+    "slug": "curso-3",
+    "nombre": "[PENDIENTE] Curso 3",
+    "descripcionCorta": "[PENDIENTE] Descripción corta del curso 3.",
+    "descripcion": "[PENDIENTE] Descripción completa del curso 3 (markdown).",
+    "precio": 100.00,
+    "imagen": "/cursos/curso-3.jpg",
+    "ubicacion": null,
+    "duracionTexto": null,
+    "activo": true,
+    "orden": 3
+  },
+  {
+    "slug": "curso-4",
+    "nombre": "[PENDIENTE] Curso 4",
+    "descripcionCorta": "[PENDIENTE] Descripción corta del curso 4.",
+    "descripcion": "[PENDIENTE] Descripción completa del curso 4 (markdown).",
+    "precio": 100.00,
+    "imagen": "/cursos/curso-4.jpg",
+    "ubicacion": null,
+    "duracionTexto": null,
+    "activo": true,
+    "orden": 4
+  }
+]

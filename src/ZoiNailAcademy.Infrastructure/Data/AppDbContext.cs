@@ -16,6 +16,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Curso> Cursos => Set<Curso>();
+    public DbSet<Edicion> Ediciones => Set<Edicion>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
