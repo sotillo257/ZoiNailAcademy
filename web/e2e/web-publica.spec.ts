@@ -60,7 +60,7 @@ test("lista de espera desde Formaciones con el curso preseleccionado", async ({ 
   await expect(form.getByLabel("¿Qué formación te interesa?")).toHaveValue(curso.id);
   await form.getByLabel("Nombre y apellidos").fill(`Prueba ${unico()}`);
   await form.getByRole("textbox", { name: "WhatsApp" }).fill(telefono());
-  await form.getByLabel("Email").fill(`e2e-${unico()}@example.com`);
+  await form.getByRole("textbox", { name: "Email", exact: true }).fill(`e2e-${unico()}@example.com`);
   await form.getByLabel(/Acepto la política de privacidad/).check();
   await form.getByRole("button", { name: "Quiero entrar en la lista" }).click();
   await expect(form.getByText("¡Ya estás en la lista!")).toBeVisible();
