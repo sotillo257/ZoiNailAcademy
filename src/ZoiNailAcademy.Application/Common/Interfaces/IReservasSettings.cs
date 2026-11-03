@@ -14,4 +14,10 @@ public interface IReservasSettings
 
     /// <summary>Maximum valid pending bookings per email or phone (<c>Reservas:MaxPendientesPorContacto</c>).</summary>
     int MaxPendientesPorContacto { get; }
+
+    /// <summary>Lifetime of a manual (transfer/Bizum) booking (<c>Reservas:ManualHorasCaducidad</c>).</summary>
+    TimeSpan ManualCaducidad { get; }
+
+    /// <summary>Interval of the expiry job (<c>Reservas:JobIntervaloMinutos</c>).</summary>
+    TimeSpan JobIntervalo { get; }
 }

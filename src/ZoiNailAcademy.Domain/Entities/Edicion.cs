@@ -57,6 +57,9 @@ public class Edicion : BaseAuditableEntity
 
     public bool HaEmpezado(DateTimeOffset now) => Inicio <= now;
 
+    /// <summary>Moment bookings close: <c>Inicio − Reservas:CierreHorasAntes</c>.</summary>
+    public DateTimeOffset CierreReservas(TimeSpan cierreAntesDeInicio) => Inicio - cierreAntesDeInicio;
+
     /// <summary>
     /// Bookable: scheduled, course active and starting after the booking closing window. An edition is
     /// visible on the web exactly when it is bookable (even when it has no free seats).
@@ -66,9 +69,13 @@ public class Edicion : BaseAuditableEntity
 
     /// <param name="ocupadas">Seats held by paid or valid pending bookings.</param>
     /// <param name="confirmarCambioFecha">The client confirmed she will warn the enrolled students.</param>
+    /// <param name="pagadas">
+    /// Paid bookings, for the cancellation warning (pending ones are cancelled automatically). Defaults to
+    /// <paramref name="ocupadas"/>.
+    /// </param>
     public CambioEdicion Actualizar(
         DateTimeOffset inicio, int plazas, EstadoEdicion estado, string? notas, int ocupadas,
-        bool confirmarCambioFecha, DateTimeOffset now)
+        bool confirmarCambioFecha, DateTimeOffset now, int? pagadas = null)
     {
         inicio = inicio.ToUniversalTime();
         var cambiaInicio = inicio != Inicio;
@@ -119,9 +126,10 @@ public class Edicion : BaseAuditableEntity
 
         var publicada = Estado == EstadoEdicion.Oculta && estado == EstadoEdicion.Programada;
         var avisos = new List<string>();
-        if (cambiaEstado && estado == EstadoEdicion.Cancelada && ocupadas > 0)
+        var inscritos = pagadas ?? ocupadas;
+        if (cambiaEstado && estado == EstadoEdicion.Cancelada && inscritos > 0)
         {
-            avisos.Add($"Tiene {ocupadas} inscritos: avisa y reembolsa manualmente");
+            avisos.Add($"Tiene {inscritos} inscritos: avisa y reembolsa manualmente");
         }
 
         Inicio = inicio;

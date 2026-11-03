@@ -7,6 +7,7 @@ using ZoiNailAcademy.Host;
 using ZoiNailAcademy.Host.Authentication;
 using ZoiNailAcademy.Host.Authorization;
 using ZoiNailAcademy.Host.Conventions;
+using ZoiNailAcademy.Host.Jobs;
 using ZoiNailAcademy.Host.Middleware;
 using ZoiNailAcademy.Host.Networking;
 using ZoiNailAcademy.Host.RateLimiting;
@@ -34,6 +35,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddHostedService<ExpirarReservasJob>();
 
 builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
 builder.Services.AddSingleton<RefreshTokenCookie>();

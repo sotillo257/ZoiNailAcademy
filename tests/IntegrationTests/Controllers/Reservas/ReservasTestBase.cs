@@ -31,6 +31,28 @@ public abstract class ReservasTestBase(CustomWebApplicationFactory factory) : Ca
     protected Task<HttpResponseMessage> ReservarAsync(object formulario) =>
         SendAsync(HttpMethod.Post, "/api/reservas/tarjeta", content: JsonContent.Create(formulario));
 
+    protected Task<HttpResponseMessage> ReservarManualAsync(object formulario, HttpClient? client = null) =>
+        SendAsync(HttpMethod.Post, "/api/reservas/manual", content: JsonContent.Create(formulario), client: client);
+
+    protected async Task<ReservaPublicaTestDto> ReservarManualOkAsync(Guid edicionId, HttpClient? client = null)
+    {
+        var response = await ReservarManualAsync(Formulario(edicionId), client);
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        return await ReadAsync<ReservaPublicaTestDto>(response);
+    }
+
+    /// <summary>Changes a booking directly in the database (e.g. to expire it without the job).</summary>
+    protected async Task ModificarReservaAsync(string codigo, Action<Reserva> cambio)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        cambio(await db.Reservas.SingleAsync(r => r.Codigo == codigo));
+        await db.SaveChangesAsync();
+    }
+
+    protected async Task<string> VersionAsync(string codigo) =>
+        (await BuscarReservaAsync(codigo))!.Version.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     protected async Task<ReservaTarjetaTestDto> ReservarOkAsync(Guid edicionId)
     {
         var response = await ReservarAsync(Formulario(edicionId));
@@ -104,6 +126,15 @@ public abstract class ReservasTestBase(CustomWebApplicationFactory factory) : Ca
 
 public record ReservaTarjetaTestDto(string Codigo, string CheckoutUrl);
 
+public record DatosPagoTestDto(string Titular, string Iban, string BizumTelefono, string Concepto);
+
 public record ReservaPublicaTestDto(
     string Codigo, string Estado, string Metodo, string Curso, DateTimeOffset Inicio, decimal Importe,
-    DateTimeOffset? ExpiraEn, object? DatosPago, string? WhatsappUrl);
+    DateTimeOffset? ExpiraEn, DatosPagoTestDto? DatosPago, string? WhatsappUrl);
+
+public record ReservaAdminTestDto(
+    Guid Id, string Codigo, Guid EdicionId, string Curso, DateTimeOffset Inicio, string Metodo, string Estado,
+    string Nombre, string Email, string Telefono, decimal Importe, DateTimeOffset CreadaEn, DateTimeOffset? PagadaEn,
+    DateTimeOffset ExpiraEn, bool RequiereRevision, string? NotaInterna, string? StripePaymentIntentId, string Version);
+
+public record ReservaAccionTestDto(ReservaAdminTestDto Reserva, List<string> Avisos);

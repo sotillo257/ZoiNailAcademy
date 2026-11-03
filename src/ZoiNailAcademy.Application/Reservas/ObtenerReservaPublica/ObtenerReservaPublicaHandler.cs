@@ -6,7 +6,7 @@ using ZoiNailAcademy.Application.Common.Interfaces;
 
 namespace ZoiNailAcademy.Application.Reservas.ObtenerReservaPublica;
 
-public class ObtenerReservaPublicaHandler(IAppDbContext dbContext)
+public class ObtenerReservaPublicaHandler(IAppDbContext dbContext, ReservaPublicaDtoFactory dtoFactory)
     : IRequestHandler<ObtenerReservaPublicaQuery, Result<ReservaPublicaDto>>
 {
     public async Task<Result<ReservaPublicaDto>> Handle(ObtenerReservaPublicaQuery request, CancellationToken cancellationToken)
@@ -17,6 +17,6 @@ public class ObtenerReservaPublicaHandler(IAppDbContext dbContext)
             .FirstOrDefaultAsync(r => r.Codigo == request.Codigo, cancellationToken)
             ?? throw new NotFoundException("Reserva", request.Codigo);
 
-        return Result.Success(ReservaPublicaDto.From(reserva));
+        return Result.Success(dtoFactory.Crear(reserva));
     }
 }

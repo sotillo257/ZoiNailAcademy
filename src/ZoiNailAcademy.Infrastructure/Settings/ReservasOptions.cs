@@ -16,4 +16,10 @@ public class ReservasOptions
 
     /// <summary>Maximum valid pending bookings per email or phone.</summary>
     public int MaxPendientesPorContacto { get; set; } = 2;
+
+    /// <summary>Hours a manual (transfer/Bizum) booking holds its seat, clipped to the edition's closing time.</summary>
+    public int ManualHorasCaducidad { get; set; } = 48;
+
+    /// <summary>Minutes between runs of the expiry job.</summary>
+    public int JobIntervaloMinutos { get; set; } = 5;
 }

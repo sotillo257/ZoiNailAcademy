@@ -74,6 +74,17 @@ Los errores de negocio son `409` con `code` (y datos extra como `ocupadas` o `re
 
 Nunca se vende más de una plaza de las que hay: cada reserva bloquea la fila de la edición (`SELECT … FOR UPDATE`) antes de contar plazas. En Stripe hay que dar de alta el endpoint `https://<dominio>/api/stripe/webhook` con los eventos `checkout.session.completed` y `checkout.session.expired`, y copiar su secreto de firma en `Stripe__WebhookSecret`.
 
+### Reservas por transferencia o Bizum (F04)
+
+| Método | Ruta | Auth | Descripción |
+| --- | --- | --- | --- |
+| POST | `/api/reservas/manual` | No (rate limit `reservas`) | Igual que `tarjeta`; devuelve `datosPago`, `whatsappUrl` y `expiraEn` (48 h, recortadas al cierre; 409 si quedan < 2 h) |
+| POST | `/api/admin/reservas/{id}/confirmar` | Backoffice | `{version, nota?}`: marca pagada una transferencia/Bizum |
+| POST | `/api/admin/reservas/{id}/cancelar` | Backoffice | `{version, motivo?, confirmarPagada?}` |
+| POST | `/api/admin/reservas/{id}/ampliar` | Backoffice | `{version, horas}` (1–168), recortado al cierre de la edición |
+
+Las acciones responden `{reserva, avisos}` y exigen el `version` leído (409 `concurrencia` si el job u otra persona la cambió). Un job en segundo plano (`Reservas__JobIntervaloMinutos`) expira las pendientes vencidas con un advisory lock de PostgreSQL, así que es seguro con varias réplicas; aunque vaya con retraso, la plaza vuelve al calendario en cuanto pasa `ExpiraEn`. Cancelar una edición cancela sus reservas pendientes.
+
 `/api/auth/register` no existe. Los controllers de `/api/admin/**` llevan `[Authorize(Policy = AuthorizationPolicies.Backoffice)]` a nivel de clase (y `SuperAdmin` en las acciones del desarrollador); un test de integración recorre esas rutas dinámicamente y falla si alguna queda abierta.
 
 ## Configuración
@@ -99,6 +110,10 @@ Lista completa con ejemplos en [`.env.example`](.env.example). Toda variable nue
 | `App__BaseUrl` | URL pública de la web, para las URLs de vuelta de Stripe Checkout |
 | `Reservas__StripeMinutosBloqueo` | Duración de la sesión de Checkout en minutos (mínimo 30; la reserva dura 5 más) |
 | `Reservas__MaxPendientesPorContacto` | Reservas pendientes vigentes permitidas por email o teléfono (2) |
+| `Reservas__ManualHorasCaducidad` | Horas que una reserva por transferencia/Bizum bloquea la plaza (48) |
+| `Reservas__JobIntervaloMinutos` | Cada cuántos minutos se expiran las pendientes vencidas (5) |
+| `Pago__Titular`, `Pago__Iban`, `Pago__BizumTelefono` | Datos de pago que ve el comprador |
+| `Pago__WhatsAppTelefono` | WhatsApp para el comprobante, internacional sin `+` (`34612345678`) |
 | `Stripe__SecretKey`, `Stripe__WebhookSecret` | **Secretos** de Stripe (`sk_…` y `whsec_…` del endpoint del webhook) |
 | `Swagger__EnableInProduction` | `true` para exponer Swagger temporalmente en producción |
 

@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<Common.Interfaces.IOcupacionReader, Ediciones.OcupacionReader>();
         services.AddScoped<Ediciones.EdicionesPublicas>();
         services.AddScoped<Reservas.CrearReservaService>();
+        services.AddScoped<Reservas.ReservaPublicaDtoFactory>();
 
         return services;
     }

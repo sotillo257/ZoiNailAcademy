@@ -23,7 +23,7 @@ public class CrearReservaServiceTests
     }
 
     private NuevaReserva Nueva(string email = "Nueva@Mail.com", string telefono = "612 34 56 78") =>
-        new(_edicion.Id, "Lucía", email, telefono, MetodoPago.Stripe, CatalogoFactory.Now.AddMinutes(35));
+        new(_edicion.Id, "Lucía", email, telefono, MetodoPago.Stripe, (_, now) => now.AddMinutes(35));
 
     [Fact]
     public async Task CrearAsync_WithFreeSeat_LocksInsertsNormalizedAndCommits()
@@ -93,7 +93,7 @@ public class CrearReservaServiceTests
         pagada.Pagar(CatalogoFactory.Now);
         _ctx.SetupReservas(caducada, pagada);
 
-        var reserva = await _service.CrearAsync(Nueva() with { ExpiraEn = CatalogoFactory.Now.AddHours(1) }, CancellationToken.None);
+        var reserva = await _service.CrearAsync(Nueva() with { CalcularExpiraEn = (_, now) => now.AddHours(1) }, CancellationToken.None);
 
         reserva.Estado.Should().Be(EstadoReserva.Pendiente);
     }

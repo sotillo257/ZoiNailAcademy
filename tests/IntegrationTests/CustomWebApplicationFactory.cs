@@ -9,6 +9,8 @@ using MediatR;
 using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Application.Ediciones;
 using ZoiNailAcademy.Application.Reservas;
+using ZoiNailAcademy.Host.Jobs;
+using Microsoft.Extensions.Hosting;
 using Testcontainers.PostgreSql;
 using ZoiNailAcademy.Infrastructure.Data;
 
@@ -31,6 +33,31 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.UtcNow);
 
     public const string StripeWebhookSecret = "whsec_test_integration_secret";
+    public const string PagoTitular = "Zoi Nail Academy";
+    public const string PagoIban = "ES91 2100 0418 4502 0005 1332";
+
+    /// <summary>
+    /// A separate host on the same database with its own clock, for tests that move time forward (the
+    /// shared clock must stay near the real one: JWT validation uses the real clock).
+    /// </summary>
+    public WebApplicationFactory<Program> CreateHost(FakeTimeProvider clock, bool conJob = false) =>
+        WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<TimeProvider>(clock);
+            if (conJob)
+            {
+                services.AddHostedService<ExpirarReservasJob>();
+            }
+        }));
+
+    private static void RemoveExpiryJob(IServiceCollection services)
+    {
+        var job = services.Where(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(ExpirarReservasJob)).ToList();
+        foreach (var descriptor in job)
+        {
+            services.Remove(descriptor);
+        }
+    }
 
     /// <summary>Stripe without network, shared by the tests (sessions are keyed by id).</summary>
     public FakeStripeGateway StripeGateway { get; } = new();
@@ -63,6 +90,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("SuperAdmin:SeedNombre", "Desarrollador");
         builder.UseSetting("App:BaseUrl", "https://web.test");
         builder.UseSetting("Stripe:WebhookSecret", StripeWebhookSecret);
+        builder.UseSetting("Pago:Titular", PagoTitular);
+        builder.UseSetting("Pago:Iban", PagoIban);
+        builder.UseSetting("Pago:BizumTelefono", "600111222");
+        builder.UseSetting("Pago:WhatsAppTelefono", "34600111222");
 
         builder.ConfigureTestServices(services =>
         {
@@ -76,6 +107,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddTransient<INotificationHandler<ReservaPagadaEvent>, RecordingHandler<ReservaPagadaEvent>>();
             services.AddTransient<INotificationHandler<ReservaExpiradaEvent>, RecordingHandler<ReservaExpiradaEvent>>();
             services.AddTransient<INotificationHandler<PagoTrasCaducidadSinPlazaEvent>, RecordingHandler<PagoTrasCaducidadSinPlazaEvent>>();
+            services.AddTransient<INotificationHandler<ReservaManualCreadaEvent>, RecordingHandler<ReservaManualCreadaEvent>>();
+            services.AddTransient<INotificationHandler<ReservaCanceladaEvent>, RecordingHandler<ReservaCanceladaEvent>>();
+
+            // The expiry job is started explicitly by the tests that need it (CreateHost(conJob: true)),
+            // so it never runs in the background of unrelated tests.
+            RemoveExpiryJob(services);
         });
     }
 }

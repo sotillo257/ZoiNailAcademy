@@ -33,12 +33,12 @@ public class ReservarConTarjetaHandler(
             return Result.Success(new ReservaTarjetaCreadaDto(codigoFalso, SuccessUrl(codigoFalso)));
         }
 
-        var now = timeProvider.GetUtcNow();
         var reserva = await crearReserva.CrearAsync(
             new NuevaReserva(
                 request.EdicionId, request.Nombre, request.Email, request.Telefono, MetodoPago.Stripe,
-                now + settings.StripeBloqueo + MargenCaducidad),
+                (_, ahora) => ahora + settings.StripeBloqueo + MargenCaducidad),
             cancellationToken);
+        var now = reserva.ConsentimientoEn;
 
         CheckoutSesion sesion;
         try

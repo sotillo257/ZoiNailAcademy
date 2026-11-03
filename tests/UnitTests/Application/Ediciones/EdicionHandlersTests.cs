@@ -74,7 +74,8 @@ public class EditarEdicionHandlerTests
     public EditarEdicionHandlerTests()
     {
         _handler = new EditarEdicionHandler(
-            _ctx.DbContext.Object, _ctx.OcupacionReader.Object, _ctx.Publisher.Object, _ctx.Settings.Object, _ctx.TimeProvider,
+            _ctx.DbContext.Object, _ctx.OcupacionReader.Object, _ctx.Publisher.Object, _ctx.Settings.Object,
+            new Mock<ZoiNailAcademy.Application.Common.Interfaces.IStripeGateway>().Object, _ctx.TimeProvider,
             NullLogger<EditarEdicionHandler>.Instance);
     }
 
@@ -142,7 +143,7 @@ public class EditarEdicionHandlerTests
 
         var result = await _handler.Handle(Command(edicion, EstadoEdicion.Cancelada), CancellationToken.None);
 
-        result.Value.Avisos.Should().ContainSingle().Which.Should().Contain("Tiene 2 inscritos");
+        result.Value.Avisos.Should().ContainSingle().Which.Should().Be("Tiene 1 inscritos: avisa y reembolsa manualmente");
         result.Value.Edicion.Pagadas.Should().Be(1);
         result.Value.Edicion.Pendientes.Should().Be(1);
         result.Value.Edicion.Libres.Should().Be(8);

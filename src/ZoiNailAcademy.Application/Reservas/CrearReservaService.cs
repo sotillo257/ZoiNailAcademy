@@ -12,8 +12,13 @@ using ValidationException = ZoiNailAcademy.Application.Common.Exceptions.Validat
 
 namespace ZoiNailAcademy.Application.Reservas;
 
+/// <param name="CalcularExpiraEn">
+/// Expiry of the booking from the locked edition and the current time (manual bookings depend on the
+/// edition's start). It may throw a <see cref="BusinessRuleException"/> to reject the booking.
+/// </param>
 public sealed record NuevaReserva(
-    Guid EdicionId, string Nombre, string Email, string Telefono, MetodoPago Metodo, DateTimeOffset ExpiraEn);
+    Guid EdicionId, string Nombre, string Email, string Telefono, MetodoPago Metodo,
+    Func<Edicion, DateTimeOffset, DateTimeOffset> CalcularExpiraEn);
 
 /// <summary>
 /// Booking core shared by card (F03) and manual (F04) payments. Inside one transaction it locks the
@@ -48,6 +53,8 @@ public class CrearReservaService(
             throw new BusinessRuleException(ErrorCodes.EdicionNoReservable, "Esta fecha ya no admite reservas.");
         }
 
+        var expiraEn = nueva.CalcularExpiraEn(edicion, now);
+
         var pendientesDelContacto = await dbContext.Reservas.CountAsync(
             r => r.Estado == EstadoReserva.Pendiente && r.ExpiraEn > now && (r.Email == email || r.Telefono == telefono),
             cancellationToken);
@@ -66,7 +73,7 @@ public class CrearReservaService(
 
         var reserva = Reserva.Create(
             edicion, await GenerarCodigoLibreAsync(cancellationToken), nueva.Metodo, nueva.Nombre, email, telefono,
-            nueva.ExpiraEn, now);
+            expiraEn, now);
 
         dbContext.Reservas.Add(reserva);
         await dbContext.SaveChangesAsync(cancellationToken);

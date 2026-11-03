@@ -154,6 +154,121 @@ public class Reserva : BaseAuditableEntity
         CanceladaEn = now;
     }
 
+    public const int HorasAmpliacionMaximas = 168;
+
+    /// <summary>A manual booking needs at least this long before the edition closes (the buyer must transfer).</summary>
+    public static readonly TimeSpan MargenMinimoManual = TimeSpan.FromHours(2);
+
+    /// <summary>Expiry of a manual booking: its lifetime, clipped to the moment bookings close.</summary>
+    public static DateTimeOffset CalcularCaducidadManual(DateTimeOffset now, TimeSpan duracion, DateTimeOffset cierre)
+    {
+        if (cierre - now < MargenMinimoManual)
+        {
+            throw new BusinessRuleException(
+                ErrorCodes.EdicionNoReservable, "Para esta fecha solo se puede pagar con tarjeta");
+        }
+
+        var expira = now + duracion;
+        return expira < cierre ? expira : cierre;
+    }
+
+    /// <param name="hayPlaza">
+    /// Whether the edition has a free seat. Only checked when the booking holds no seat right now: expired, or
+    /// still pending but past <see cref="ExpiraEn"/> (the job has not run yet).
+    /// </param>
+    /// <returns>True when the booking became paid; false when it already was (idempotent).</returns>
+    public bool ConfirmarPagoManual(DateTimeOffset now, bool hayPlaza, string? nota)
+    {
+        if (Estado == EstadoReserva.Pagada)
+        {
+            return false;
+        }
+
+        if (Estado == EstadoReserva.Cancelada)
+        {
+            throw EstadoInvalido("Una reserva cancelada no se puede confirmar.");
+        }
+
+        if (Metodo == MetodoPago.Stripe)
+        {
+            throw EstadoInvalido("Los pagos con tarjeta se confirman solos");
+        }
+
+        if (!OcupaPlaza(now) && !hayPlaza)
+        {
+            throw new BusinessRuleException(ErrorCodes.SinPlazas, "La plaza ya se ha ocupado; habla con el comprador");
+        }
+
+        MarcarPagada(now, null);
+        AnadirNota(nota);
+        return true;
+    }
+
+    /// <param name="confirmarPagada">The client confirmed she will refund a paid booking outside the system.</param>
+    /// <returns>True when the booking became cancelled; false when it already was (idempotent).</returns>
+    public bool CancelarDesdeBackoffice(DateTimeOffset now, bool confirmarPagada, string? motivo)
+    {
+        switch (Estado)
+        {
+            case EstadoReserva.Cancelada:
+                return false;
+            case EstadoReserva.Pagada when !confirmarPagada:
+                throw EstadoInvalido("La reserva está pagada: confirma que vas a devolver el pago para cancelarla.");
+        }
+
+        Estado = EstadoReserva.Cancelada;
+        CanceladaEn = now;
+        AnadirNota(motivo);
+        return true;
+    }
+
+    /// <param name="cierre">Moment bookings of the edition close; the expiry never goes past it.</param>
+    /// <param name="hayPlaza">Whether the edition has a free seat; only checked when the booking holds no seat right now.</param>
+    public void Ampliar(DateTimeOffset now, int horas, DateTimeOffset cierre, bool hayPlaza)
+    {
+        if (Metodo != MetodoPago.Manual || Estado is not (EstadoReserva.Pendiente or EstadoReserva.Expirada))
+        {
+            throw EstadoInvalido("Solo se puede ampliar una reserva por transferencia pendiente o caducada.");
+        }
+
+        if (horas is < 1 or > HorasAmpliacionMaximas)
+        {
+            throw new DomainException($"Las horas deben estar entre 1 y {HorasAmpliacionMaximas}.");
+        }
+
+        if (cierre <= now)
+        {
+            throw new BusinessRuleException(ErrorCodes.EdicionNoReservable, "Las reservas de esta fecha ya están cerradas.");
+        }
+
+        if (!OcupaPlaza(now) && !hayPlaza)
+        {
+            throw new BusinessRuleException(ErrorCodes.SinPlazas, "La plaza ya se ha ocupado; habla con el comprador");
+        }
+
+        // A pending booking keeps the time it had left; a reactivated one counts from now.
+        var desde = Estado == EstadoReserva.Pendiente && ExpiraEn > now ? ExpiraEn : now;
+        if (Estado == EstadoReserva.Expirada)
+        {
+            Estado = EstadoReserva.Pendiente;
+            ExpiradaEn = null;
+        }
+
+        var nueva = desde.AddHours(horas);
+        ExpiraEn = nueva < cierre ? nueva : cierre;
+    }
+
+    private void AnadirNota(string? nota)
+    {
+        if (string.IsNullOrWhiteSpace(nota))
+        {
+            return;
+        }
+
+        var combinada = string.IsNullOrEmpty(NotaInterna) ? nota.Trim() : $"{NotaInterna}\n{nota.Trim()}";
+        NotaInterna = combinada.Length <= NotaInternaMaxLength ? combinada : combinada[..NotaInternaMaxLength];
+    }
+
     private void MarcarPagada(DateTimeOffset now, string? stripePaymentIntentId)
     {
         Estado = EstadoReserva.Pagada;
