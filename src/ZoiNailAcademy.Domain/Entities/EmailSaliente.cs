@@ -15,6 +15,7 @@ public class EmailSaliente : BaseAuditableEntity
     public const int TipoMaxLength = 50;
     public const int UltimoErrorMaxLength = 1000;
     public const int ProveedorIdMaxLength = 100;
+    public const int BajaUrlMaxLength = 500;
     public const int DiasRetencion = 90;
 
     /// <summary>After this many failed attempts the email is <see cref="EstadoEmail.Fallido"/>.</summary>
@@ -41,6 +42,12 @@ public class EmailSaliente : BaseAuditableEntity
     /// <summary>Booking, waiting list entry… With <see cref="Tipo"/> it is unique: an event published twice enqueues one email.</summary>
     public Guid? ReferenciaId { get; private set; }
 
+    /// <summary>
+    /// One-click unsubscribe URL sent as the <c>List-Unsubscribe</c> header (with <c>List-Unsubscribe-Post</c>), for
+    /// the automatic emails a person can unsubscribe from (F11). Null for every other email.
+    /// </summary>
+    public string? BajaUrl { get; private set; }
+
     public EstadoEmail Estado { get; private set; }
     public int Intentos { get; private set; }
     public DateTimeOffset ProximoIntentoEn { get; private set; }
@@ -55,10 +62,19 @@ public class EmailSaliente : BaseAuditableEntity
     {
     }
 
+    /// <param name="now">First attempt: the job sends it from this moment on (a later one spaces out a batch).</param>
+    /// <param name="bajaUrl">Absolute one-click unsubscribe URL (<see cref="BajaUrl"/>).</param>
     public static EmailSaliente Create(
         string para, string? replyTo, string asunto, string html, string texto, string tipo, Guid? referenciaId,
-        DateTimeOffset now)
+        DateTimeOffset now, string? bajaUrl = null)
     {
+        var baja = string.IsNullOrWhiteSpace(bajaUrl) ? null : bajaUrl.Trim();
+        if (baja is not null && (baja.Length > BajaUrlMaxLength
+            || !Uri.TryCreate(baja, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http")))
+        {
+            throw new DomainException("La URL de baja del email no es válida.");
+        }
+
         var asuntoLimpio = Required(asunto, "El asunto es obligatorio.");
         return new EmailSaliente
         {
@@ -70,6 +86,7 @@ public class EmailSaliente : BaseAuditableEntity
             Texto = Required(texto, "El texto del email es obligatorio."),
             Tipo = Required(tipo, "El tipo de email es obligatorio."),
             ReferenciaId = referenciaId,
+            BajaUrl = baja,
             Estado = EstadoEmail.Pendiente,
             ProximoIntentoEn = now
         };

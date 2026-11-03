@@ -38,6 +38,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<ExpirarReservasJob>();
 builder.Services.AddHostedService<EnviarEmailsJob>();
+builder.Services.AddHostedService<AvisosNuevasEdicionesJob>();
 
 builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
 builder.Services.AddSingleton<RefreshTokenCookie>();

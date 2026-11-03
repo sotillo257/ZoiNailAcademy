@@ -6,6 +6,7 @@ using ZoiNailAcademy.Application.Cursos.CrearCurso;
 using ZoiNailAcademy.Application.Cursos.DesactivarCurso;
 using ZoiNailAcademy.Application.Cursos.EditarCurso;
 using ZoiNailAcademy.Application.Cursos.ListarCursosAdmin;
+using ZoiNailAcademy.Application.Cursos.ObtenerCursoAdmin;
 using ZoiNailAcademy.Host.Authorization;
 
 namespace ZoiNailAcademy.Host.Controllers;
@@ -21,6 +22,17 @@ public class AdminCursosController(ISender sender) : ControllerBase
     public async Task<IActionResult> Listar(CancellationToken cancellationToken)
     {
         var result = await sender.Send(new ListarCursosAdminQuery(), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    /// <summary>Every field of a course (active or not), to fill the edit screen.</summary>
+    [HttpGet("{id:guid}")]
+    [Authorize(Policy = AuthorizationPolicies.SuperAdmin)]
+    [ProducesResponseType<CursoAdminDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Obtener(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new ObtenerCursoAdminQuery(id), cancellationToken);
         return Ok(result.Value);
     }
 

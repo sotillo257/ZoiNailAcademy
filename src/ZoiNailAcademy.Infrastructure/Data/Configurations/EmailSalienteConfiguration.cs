@@ -19,6 +19,7 @@ public class EmailSalienteConfiguration : IEntityTypeConfiguration<EmailSaliente
         builder.Property(e => e.Estado).IsRequired().HasConversion<string>().HasMaxLength(20);
         builder.Property(e => e.UltimoError).HasMaxLength(EmailSaliente.UltimoErrorMaxLength);
         builder.Property(e => e.ProveedorId).HasMaxLength(EmailSaliente.ProveedorIdMaxLength);
+        builder.Property(e => e.BajaUrl).HasMaxLength(EmailSaliente.BajaUrlMaxLength);
 
         // An event published twice enqueues its email once.
         builder.HasIndex(e => new { e.Tipo, e.ReferenciaId }).IsUnique().HasFilter(@"""ReferenciaId"" IS NOT NULL");

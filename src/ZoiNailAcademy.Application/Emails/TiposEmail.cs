@@ -12,10 +12,13 @@ public static class TiposEmail
     public const string ListaEsperaClienta = "ListaEspera.Clienta";
     public const string ContactoClienta = "Contacto.Clienta";
     public const string ContactoAcuse = "Contacto.Acuse";
+    public const string AvisoNuevasEdiciones = "AvisoNuevasEdiciones";
+    public const string AvisoNuevasEdicionesClienta = "AvisoNuevasEdiciones.Clienta";
 
     public static readonly IReadOnlyList<string> Todos =
     [
         ReservaPagadaComprador, ReservaPagadaClienta, ReservaManualComprador, ReservaManualClienta,
-        ReservaExpiradaComprador, PagoSinPlazaClienta, ListaEsperaClienta, ContactoClienta, ContactoAcuse
+        ReservaExpiradaComprador, PagoSinPlazaClienta, ListaEsperaClienta, ContactoClienta, ContactoAcuse,
+        AvisoNuevasEdiciones, AvisoNuevasEdicionesClienta
     ];
 }

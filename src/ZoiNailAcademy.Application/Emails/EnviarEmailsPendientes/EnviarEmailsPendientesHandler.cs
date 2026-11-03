@@ -72,7 +72,7 @@ public class EnviarEmailsPendientesHandler(
         try
         {
             var proveedorId = await sender.EnviarAsync(
-                new(email.Id, email.Para, email.ReplyTo, email.Asunto, email.Html, email.Texto, email.Tipo), cancellationToken);
+                new(email.Id, email.Para, email.ReplyTo, email.Asunto, email.Html, email.Texto, email.Tipo, email.BajaUrl), cancellationToken);
             email.MarcarEnviado(proveedorId, timeProvider.GetUtcNow());
             enviado = true;
         }

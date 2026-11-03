@@ -46,7 +46,7 @@ PK compuesta `(ListaEsperaId, EdicionId)`.
 
 - **Asunto:** `Nuevas fechas para {curso}`.
 - **Cuerpo:** saludo con nombre, lista de fechas (día, hora, plazas libres en el momento del envío, aclarando que pueden agotarse), botón "Reservar mi plaza" → `/reservar/{slug}`, recordatorio de que se apuntó a la lista de espera de este curso.
-- **Pie:** enlace de baja `{App__BaseUrl}/baja?token={BajaToken}` y cabeceras `List-Unsubscribe: <{url de baja}>` y `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (mejora la entregabilidad en Gmail).
+- **Pie:** enlace de baja `{App__BaseUrl}/baja?token={BajaToken}&curso={slug}` (`curso` permite a la página nombrar el curso, porque el endpoint responde 204 sin cuerpo) y cabeceras `List-Unsubscribe: <{url de baja}>` y `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (mejora la entregabilidad en Gmail).
 
 ## Baja
 

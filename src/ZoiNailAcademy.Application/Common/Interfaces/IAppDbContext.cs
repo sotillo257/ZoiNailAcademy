@@ -14,6 +14,8 @@ public interface IAppDbContext
     DbSet<StripeEvento> StripeEventos { get; }
     DbSet<ListaEspera> ListaEspera { get; }
     DbSet<EmailSaliente> EmailsSalientes { get; }
+    DbSet<AvisoPendiente> AvisosPendientes { get; }
+    DbSet<AvisoEnviado> AvisosEnviados { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

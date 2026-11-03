@@ -28,7 +28,7 @@ Maquetar la web pública según el Figma (escritorio y móvil con layouts propio
 | `/reserva/[codigo]` | Cliente | Estado de la reserva: instrucciones de pago manual o confirmación de tarjeta |
 | `/lista-espera?curso=&edicion=` | SSR | Formulario de lista de espera |
 | `/contacto` | Estático | Formulario de contacto (vista del Figma) |
-| `/baja?token=` | Cliente | Baja de avisos (F11) |
+| `/baja?token=&curso=` | Cliente | Baja de avisos (F11); `curso` es el slug, para nombrar el curso en el texto |
 | `/aviso-legal`, `/privacidad`, `/cookies`, `/condiciones` | Estático (MDX) | Textos que aporta la clienta |
 | `not-found`, `error` | — | Páginas propias con el estilo del Figma |
 

@@ -120,6 +120,8 @@ Orden: próximas primero; pasadas al final si `incluirPasadas=true`.
 
 `DELETE /api/admin/ediciones/{id}` → 204.
 
+`GET /api/admin/cursos/{id}` (SuperAdmin) → `CursoAdminDto` (todos los campos de `Curso` salvo fechas, activo o no; 404 si no existe), para rellenar la pantalla de editar curso.
+
 `POST/PUT/DELETE /api/admin/cursos[/{id}]` (SuperAdmin) con todos los campos de `Curso` salvo fechas.
 
 ## Seed de cursos

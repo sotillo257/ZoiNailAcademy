@@ -31,6 +31,9 @@ public class CatalogoTestContext
     public Mock<IAppSettings> AppSettings { get; } = new();
     public Mock<IPagoSettings> Pago { get; } = new();
     public Mock<IStripeGateway> Stripe { get; } = new();
+    public Mock<IAvisosSettings> Avisos { get; } = new();
+    public List<AvisoPendiente> AvisosPendientes { get; private set; } = [];
+    public List<AvisoEnviado> AvisosEnviados { get; private set; } = [];
 
     public CatalogoTestContext()
     {
@@ -57,10 +60,31 @@ public class CatalogoTestContext
         SetupStripeEventos();
         SetupListaEspera();
         SetupEmails();
+        SetupAvisosPendientes();
+        SetupAvisosEnviados();
+        Avisos.Setup(x => x.LoteTamano).Returns(20);
+        Avisos.Setup(x => x.PausaEntreLotes).Returns(TimeSpan.FromSeconds(2));
         AppSettings.Setup(x => x.NombreAcademia).Returns("Zoi Nail Academy");
         AppSettings.Setup(x => x.DireccionAcademia).Returns("Calle Mayor 1, Madrid");
         EmailSettings.Setup(x => x.ReplyTo).Returns("zoi@academia.test");
         EmailSettings.Setup(x => x.AvisosClienta).Returns("avisos@academia.test");
+    }
+
+    public void SetupAvisosPendientes(params AvisoPendiente[] pendientes)
+    {
+        AvisosPendientes = pendientes.ToList();
+        var mockSet = AvisosPendientes.BuildMockDbSet();
+        mockSet.Setup(x => x.Add(It.IsAny<AvisoPendiente>())).Callback<AvisoPendiente>(AvisosPendientes.Add);
+        mockSet.Setup(x => x.Remove(It.IsAny<AvisoPendiente>())).Callback<AvisoPendiente>(p => AvisosPendientes.Remove(p));
+        DbContext.Setup(x => x.AvisosPendientes).Returns(mockSet.Object);
+    }
+
+    public void SetupAvisosEnviados(params AvisoEnviado[] avisos)
+    {
+        AvisosEnviados = avisos.ToList();
+        var mockSet = AvisosEnviados.BuildMockDbSet();
+        mockSet.Setup(x => x.Add(It.IsAny<AvisoEnviado>())).Callback<AvisoEnviado>(AvisosEnviados.Add);
+        DbContext.Setup(x => x.AvisosEnviados).Returns(mockSet.Object);
     }
 
     public void SetupEmails(params EmailSaliente[] emails)

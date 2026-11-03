@@ -35,6 +35,8 @@ public static class DependencyInjection
         services.AddSingleton<IReservasSettings, ReservasSettings>();
         services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
         services.AddSingleton<IAppSettings, AppSettings>();
+        services.Configure<AvisosOptions>(configuration.GetSection(AvisosOptions.SectionName));
+        services.AddSingleton<IAvisosSettings, AvisosSettings>();
         services.Configure<PagoOptions>(configuration.GetSection(PagoOptions.SectionName));
         services.AddSingleton<IPagoSettings, PagoSettings>();
 

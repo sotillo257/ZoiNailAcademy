@@ -47,6 +47,34 @@ public class AdminCursosTests(CustomWebApplicationFactory factory) : CatalogoTes
     }
 
     [Fact]
+    public async Task Obtener_AsSuperAdmin_ReturnsEveryFieldOfAnInactiveCourse()
+    {
+        var token = await SuperAdminTokenAsync();
+        var creado = await CrearAsync(token, UniqueSlug());
+        (await SendAsync(HttpMethod.Delete, $"/api/admin/cursos/{creado.Id}", accessToken: token))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var response = await SendAsync(HttpMethod.Get, $"/api/admin/cursos/{creado.Id}", accessToken: token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await ReadAsync<CursoAdminTestDto>(response)).Should().Be(creado with { Activo = false });
+    }
+
+    [Fact]
+    public async Task Obtener_AsAdminOrUnknown_Returns403Or404()
+    {
+        var curso = await CrearCursoEnBdAsync();
+        var admin = await LoginAsNewUserAsync(UserRole.Admin);
+
+        var comoAdmin = await SendAsync(HttpMethod.Get, $"/api/admin/cursos/{curso.Id}", accessToken: admin.AccessToken);
+        var inexistente = await SendAsync(
+            HttpMethod.Get, $"/api/admin/cursos/{Guid.NewGuid()}", accessToken: await SuperAdminTokenAsync());
+
+        comoAdmin.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        await ShouldBeProblemWithCodeAsync(inexistente, 404, "no_encontrado");
+    }
+
+    [Fact]
     public async Task Crear_AsAdmin_Returns403()
     {
         var admin = await LoginAsNewUserAsync(UserRole.Admin);

@@ -7,6 +7,7 @@ using ZoiNailAcademy.Application.Cursos.DesactivarCurso;
 using ZoiNailAcademy.Application.Cursos.EditarCurso;
 using ZoiNailAcademy.Application.Cursos.ListarCursos;
 using ZoiNailAcademy.Application.Cursos.ObtenerCurso;
+using ZoiNailAcademy.Application.Cursos.ObtenerCursoAdmin;
 using ZoiNailAcademy.Application.Ediciones;
 using ZoiNailAcademy.Domain.Common.Exceptions;
 using ZoiNailAcademy.Domain.Entities;
@@ -38,6 +39,34 @@ public class CrearCursoHandlerTests
         var act = () => new CrearCursoHandler(_ctx.DbContext.Object).Handle(Command("gel"), CancellationToken.None);
 
         (await act.Should().ThrowAsync<ValidationException>()).Which.Errors.Should().ContainKey("Slug");
+    }
+}
+
+public class ObtenerCursoAdminHandlerTests
+{
+    private readonly CatalogoTestContext _ctx = new();
+
+    [Fact]
+    public async Task Handle_InactiveCourse_ReturnsEveryField()
+    {
+        var curso = CatalogoFactory.Curso("acrilico", activo: false, orden: 3, precio: 120m);
+        _ctx.SetupCursos(curso, CatalogoFactory.Curso("gel"));
+
+        var dto = (await new ObtenerCursoAdminHandler(_ctx.DbContext.Object)
+            .Handle(new ObtenerCursoAdminQuery(curso.Id), CancellationToken.None)).Value;
+
+        dto.Should().Be(new ZoiNailAcademy.Application.Cursos.CursoAdminDto(
+            curso.Id, "Acrílico", "acrilico", "Curso de uñas acrílicas", "# Temario", 120m, "/cursos/acrilico.jpg",
+            "Madrid", "2 días", false, 3));
+    }
+
+    [Fact]
+    public async Task Handle_UnknownCourse_ThrowsNotFoundException()
+    {
+        var act = () => new ObtenerCursoAdminHandler(_ctx.DbContext.Object)
+            .Handle(new ObtenerCursoAdminQuery(Guid.NewGuid()), CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 }
 
