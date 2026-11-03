@@ -19,6 +19,7 @@ Paquete de definición para implementar la web: el PRD, el contrato común de la
 | `features/F09-front-backoffice.md` | Backoffice mobile first, auth en cliente |
 | `features/F10-infraestructura.md` | Railway, dominio, DNS, Stripe, CI, variables, checklist de producción |
 | `features/F11-aviso-nuevas-ediciones.md` | Extra (regalo): aviso a la lista de espera y baja |
+| `pendientes/README.md` | Lo que falta: front, configuración de producción, pruebas manuales y temas con la clienta |
 
 ## Orden de trabajo
 
