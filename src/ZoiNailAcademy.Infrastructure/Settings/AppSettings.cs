@@ -10,4 +10,9 @@ public class AppSettings(IOptions<AppOptions> options) : IAppSettings
     public string BaseUrl => options.Value.BaseUrl.TrimEnd('/');
 
     public TimeZoneInfo TimeZone => _timeZone.Value;
+
+    public string NombreAcademia => options.Value.NombreAcademia;
+
+    public string? DireccionAcademia =>
+        string.IsNullOrWhiteSpace(options.Value.DireccionAcademia) ? null : options.Value.DireccionAcademia.Trim();
 }

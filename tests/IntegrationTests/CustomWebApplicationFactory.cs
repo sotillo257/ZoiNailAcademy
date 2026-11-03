@@ -36,6 +36,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     public const string StripeWebhookSecret = "whsec_test_integration_secret";
     public const string PagoTitular = "Zoi Nail Academy";
     public const string PagoIban = "ES91 2100 0418 4502 0005 1332";
+    public const string ClientaReplyTo = "zoi@academia.test";
+    public const string AvisosClienta = "avisos@academia.test";
 
     /// <summary>
     /// A separate host on the same database with its own clock, for tests that move time forward (the
@@ -51,9 +53,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             }
         }));
 
-    private static void RemoveExpiryJob(IServiceCollection services)
+    private static void RemoveBackgroundJobs(IServiceCollection services)
     {
-        var job = services.Where(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(ExpirarReservasJob)).ToList();
+        var job = services.Where(d => d.ServiceType == typeof(IHostedService)
+            && (d.ImplementationType == typeof(ExpirarReservasJob) || d.ImplementationType == typeof(EnviarEmailsJob))).ToList();
         foreach (var descriptor in job)
         {
             services.Remove(descriptor);
@@ -95,6 +98,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("Pago:Iban", PagoIban);
         builder.UseSetting("Pago:BizumTelefono", "600111222");
         builder.UseSetting("Pago:WhatsAppTelefono", "34600111222");
+        builder.UseSetting("Email:ReplyTo", ClientaReplyTo);
+        builder.UseSetting("Email:AvisosClienta", AvisosClienta);
 
         builder.ConfigureTestServices(services =>
         {
@@ -112,9 +117,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddTransient<INotificationHandler<ReservaCanceladaEvent>, RecordingHandler<ReservaCanceladaEvent>>();
             services.AddTransient<INotificationHandler<ListaEsperaAltaEvent>, RecordingHandler<ListaEsperaAltaEvent>>();
 
-            // The expiry job is started explicitly by the tests that need it (CreateHost(conJob: true)),
-            // so it never runs in the background of unrelated tests.
-            RemoveExpiryJob(services);
+            // The expiry job is started explicitly by the tests that need it (CreateHost(conJob: true)), and the
+            // outbox is sent by the email tests through the command, so neither runs behind unrelated tests.
+            RemoveBackgroundJobs(services);
         });
     }
 }

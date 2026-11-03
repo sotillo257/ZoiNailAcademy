@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<Ediciones.EdicionesPublicas>();
         services.AddScoped<Reservas.CrearReservaService>();
         services.AddScoped<Reservas.ReservaPublicaDtoFactory>();
+        services.AddScoped<Emails.BandejaSalida>();
 
         return services;
     }

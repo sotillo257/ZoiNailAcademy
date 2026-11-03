@@ -8,4 +8,10 @@ public interface IAppSettings
 
     /// <summary>Time zone dates are shown in (<c>App:TimeZone</c>, Europe/Madrid).</summary>
     TimeZoneInfo TimeZone { get; }
+
+    /// <summary>Name of the academy shown in the emails (<c>App:NombreAcademia</c>).</summary>
+    string NombreAcademia { get; }
+
+    /// <summary>Postal address in the footer of the emails (<c>App:DireccionAcademia</c>, optional).</summary>
+    string? DireccionAcademia { get; }
 }

@@ -13,6 +13,7 @@ public interface IAppDbContext
     DbSet<Reserva> Reservas { get; }
     DbSet<StripeEvento> StripeEventos { get; }
     DbSet<ListaEspera> ListaEspera { get; }
+    DbSet<EmailSaliente> EmailsSalientes { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

@@ -25,6 +25,8 @@ public class CatalogoTestContext
     public List<Reserva> Reservas { get; private set; } = [];
     public List<StripeEvento> StripeEventos { get; private set; } = [];
     public List<ListaEspera> ListaEspera { get; private set; } = [];
+    public List<EmailSaliente> Emails { get; private set; } = [];
+    public Mock<IEmailSettings> EmailSettings { get; } = new();
     public Mock<IDbContextTransaction> Transaction { get; } = new();
     public Mock<IAppSettings> AppSettings { get; } = new();
     public Mock<IPagoSettings> Pago { get; } = new();
@@ -54,7 +56,24 @@ public class CatalogoTestContext
         SetupReservas();
         SetupStripeEventos();
         SetupListaEspera();
+        SetupEmails();
+        AppSettings.Setup(x => x.NombreAcademia).Returns("Zoi Nail Academy");
+        AppSettings.Setup(x => x.DireccionAcademia).Returns("Calle Mayor 1, Madrid");
+        EmailSettings.Setup(x => x.ReplyTo).Returns("zoi@academia.test");
+        EmailSettings.Setup(x => x.AvisosClienta).Returns("avisos@academia.test");
     }
+
+    public void SetupEmails(params EmailSaliente[] emails)
+    {
+        Emails = emails.ToList();
+        var mockSet = Emails.BuildMockDbSet();
+        mockSet.Setup(x => x.Add(It.IsAny<EmailSaliente>())).Callback<EmailSaliente>(Emails.Add);
+        DbContext.Setup(x => x.EmailsSalientes).Returns(mockSet.Object);
+    }
+
+    public ZoiNailAcademy.Application.Emails.BandejaSalida CreateBandeja() => new(
+        DbContext.Object, AppSettings.Object, Pago.Object, EmailSettings.Object, TimeProvider,
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<ZoiNailAcademy.Application.Emails.BandejaSalida>.Instance);
 
     public void SetupListaEspera(params ListaEspera[] entradas)
     {
