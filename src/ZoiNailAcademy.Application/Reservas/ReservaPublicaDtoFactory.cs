@@ -15,7 +15,7 @@ public class ReservaPublicaDtoFactory(IPagoSettings pago, IAppSettings appSettin
 
         return new ReservaPublicaDto(
             reserva.Codigo, reserva.Estado, reserva.Metodo, curso, reserva.Edicion.Inicio, reserva.Importe,
-            pendiente ? reserva.ExpiraEn : null,
+            reserva.PrecioCurso, pendiente ? reserva.ExpiraEn : null,
             manualPendiente ? DatosPago(reserva.Codigo) : null,
             manualPendiente ? WhatsApp(reserva.Codigo, curso, reserva.Edicion.Inicio, reserva.Importe) : null);
     }

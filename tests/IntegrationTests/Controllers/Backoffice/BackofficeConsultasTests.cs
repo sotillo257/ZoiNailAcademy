@@ -185,8 +185,8 @@ public class BackofficeConsultasTests(CustomWebApplicationFactory factory) : Res
         bytes.Take(3).Should().Equal(0xEF, 0xBB, 0xBF);
         var lineas = Encoding.UTF8.GetString(bytes[3..]).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         lineas.Should().HaveCount(2);
-        lineas[0].Should().Be("Código;Nombre;Teléfono;Email;Método;Importe;Fecha de pago");
-        lineas[1].Should().StartWith($"{pagada.Codigo};Lucía Pérez;'+34").And.Contain(";Transferencia o Bizum;120,00;");
+        lineas[0].Should().Be("Código;Nombre;Teléfono;Email;Método;Importe;Resto en persona;Fecha de pago");
+        lineas[1].Should().StartWith($"{pagada.Codigo};Lucía Pérez;'+34").And.Contain(";Transferencia o Bizum;120,00;0,00;");
         string.Concat(lineas).Should().NotContain(pendiente.Codigo);
         (await SendAsync(HttpMethod.Get, $"/api/admin/ediciones/{Guid.NewGuid()}/reservas.csv", accessToken: token))
             .StatusCode.Should().Be(HttpStatusCode.NotFound);

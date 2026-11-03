@@ -13,7 +13,7 @@ public class CrearCursoHandler(IAppDbContext dbContext) : IRequestHandler<CrearC
 
         var curso = Curso.Create(
             request.Nombre, request.Slug, request.DescripcionCorta, request.Descripcion, request.Precio, request.Imagen,
-            request.Ubicacion, request.DuracionTexto, request.Activo, request.Orden);
+            request.Ubicacion, request.DuracionTexto, request.Activo, request.Orden, request.PrecioReserva);
 
         dbContext.Cursos.Add(curso);
         await dbContext.SaveChangesAsync(cancellationToken);

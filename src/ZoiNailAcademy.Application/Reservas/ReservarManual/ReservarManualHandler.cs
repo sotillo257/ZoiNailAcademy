@@ -49,10 +49,12 @@ public class ReservarManualHandler(
             .FirstOrDefaultAsync(e => e.Id == edicionId, cancellationToken);
         var curso = edicion?.Curso.Nombre ?? string.Empty;
         var inicio = edicion?.Inicio ?? now;
-        var importe = edicion?.Curso.Precio ?? 0m;
+        var importe = edicion?.Curso.PrecioReserva ?? 0m;
+        var precioCurso = edicion?.Curso.Precio ?? 0m;
 
         return new ReservaPublicaDto(
-            codigo, EstadoReserva.Pendiente, MetodoPago.Manual, curso, inicio, importe, now + settings.ManualCaducidad,
+            codigo, EstadoReserva.Pendiente, MetodoPago.Manual, curso, inicio, importe, precioCurso,
+            now + settings.ManualCaducidad,
             dtoFactory.DatosPago(codigo), dtoFactory.WhatsApp(codigo, curso, inicio, importe));
     }
 }

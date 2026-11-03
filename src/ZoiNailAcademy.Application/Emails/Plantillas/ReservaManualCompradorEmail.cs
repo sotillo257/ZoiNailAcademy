@@ -11,7 +11,8 @@ public static class ReservaManualCompradorEmail
                 $"hasta el {EmailFormato.FechaLarga(r.ExpiraEn, marca.Zona)}. Si no recibimos el pago antes, la plaza se liberará.")
             .Codigo("Concepto de la transferencia o Bizum", r.Codigo)
             .Datos(
-                ("Importe", EmailFormato.Importe(r.Importe)),
+                (r.ImporteEtiqueta, EmailFormato.Importe(r.Importe)),
+                ("Resto a pagar en persona", r.RestoTexto),
                 ("Titular", pago.Titular),
                 ("IBAN", pago.Iban),
                 ("Bizum", pago.BizumTelefono),

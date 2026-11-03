@@ -47,6 +47,42 @@ public class CursoTests
     }
 
     [Fact]
+    public void Create_WithoutSeatDeposit_ChargesTheWholePrice()
+    {
+        CatalogoFactory.Curso(precio: 149m).PrecioReserva.Should().Be(149m);
+    }
+
+    [Fact]
+    public void Create_WithSeatDeposit_KeepsIt()
+    {
+        var curso = CatalogoFactory.Curso(precio: 149m, precioReserva: 50m);
+
+        (curso.Precio, curso.PrecioReserva).Should().Be((149m, 50m));
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-10")]
+    [InlineData("149.01")]
+    public void Create_WithSeatDepositOutOfRange_ThrowsDomainException(string precioReserva)
+    {
+        var act = () => CatalogoFactory.Curso(
+            precio: 149m, precioReserva: decimal.Parse(precioReserva, System.Globalization.CultureInfo.InvariantCulture));
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void Actualizar_WithoutSeatDeposit_GoesBackToTheWholePrice()
+    {
+        var curso = CatalogoFactory.Curso(precio: 149m, precioReserva: 50m);
+
+        curso.Actualizar("Acrílico", curso.Slug, "c", "d", 160m, "/i.jpg", null, null, true, 1, false);
+
+        curso.PrecioReserva.Should().Be(160m);
+    }
+
+    [Fact]
     public void Create_WithBlankName_ThrowsDomainException()
     {
         var act = () => Curso.Create(" ", "a", "c", "d", 1m, "/i.jpg", null, null, true, 1);

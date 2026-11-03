@@ -20,12 +20,23 @@ public class ReservaTests
 
         reserva.Estado.Should().Be(EstadoReserva.Pendiente);
         reserva.Importe.Should().Be(149.90m);
+        reserva.PrecioCurso.Should().Be(149.90m);
         reserva.EdicionId.Should().Be(edicion.Id);
         reserva.Nombre.Should().Be("Lucía");
         reserva.Email.Should().Be("lucia@mail.com");
         reserva.ConsentimientoEn.Should().Be(Now);
         reserva.OcupaPlaza(Now.AddMinutes(34)).Should().BeTrue();
         reserva.OcupaPlaza(Now.AddMinutes(35)).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Create_CourseWithSeatDeposit_ChargesTheDepositAndCopiesTheFullPrice()
+    {
+        var edicion = CatalogoFactory.Edicion(CatalogoFactory.Curso(precio: 149.90m, precioReserva: 40m));
+
+        var reserva = CatalogoFactory.Reserva(edicion);
+
+        (reserva.Importe, reserva.PrecioCurso).Should().Be((40m, 149.90m));
     }
 
     [Theory]

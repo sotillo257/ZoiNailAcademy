@@ -20,6 +20,12 @@ public partial class Curso : BaseAuditableEntity
     public string DescripcionCorta { get; private set; } = null!;
     public string Descripcion { get; private set; } = null!;
     public decimal Precio { get; private set; }
+
+    /// <summary>
+    /// What is paid online to book a seat (card or transfer/Bizum); the rest, <c>Precio - PrecioReserva</c>, is paid
+    /// in person. Equal to <see cref="Precio"/> when the whole course is paid when booking.
+    /// </summary>
+    public decimal PrecioReserva { get; private set; }
     public string Imagen { get; private set; } = null!;
     public string? Ubicacion { get; private set; }
     public string? DuracionTexto { get; private set; }
@@ -35,10 +41,11 @@ public partial class Curso : BaseAuditableEntity
 
     public static Curso Create(
         string nombre, string slug, string descripcionCorta, string descripcion, decimal precio, string imagen,
-        string? ubicacion, string? duracionTexto, bool activo, int orden)
+        string? ubicacion, string? duracionTexto, bool activo, int orden, decimal? precioReserva = null)
     {
         var curso = new Curso { Id = Guid.NewGuid() };
-        curso.Apply(nombre, slug, descripcionCorta, descripcion, precio, imagen, ubicacion, duracionTexto, orden);
+        curso.Apply(
+            nombre, slug, descripcionCorta, descripcion, precio, precioReserva, imagen, ubicacion, duracionTexto, orden);
         curso.Activo = activo;
         return curso;
     }
@@ -46,10 +53,12 @@ public partial class Curso : BaseAuditableEntity
     public static bool EsSlugValido(string? slug) => slug is not null && SlugRegex().IsMatch(slug);
 
     /// <param name="tieneEdicionesFuturasProgramadas">Whether the course has future editions in <c>Programada</c>.</param>
+    /// <param name="precioReserva">Seat deposit; null means the whole price is paid when booking.</param>
     /// <returns>True when the slug changed (old URLs stop working).</returns>
     public bool Actualizar(
         string nombre, string slug, string descripcionCorta, string descripcion, decimal precio, string imagen,
-        string? ubicacion, string? duracionTexto, bool activo, int orden, bool tieneEdicionesFuturasProgramadas)
+        string? ubicacion, string? duracionTexto, bool activo, int orden, bool tieneEdicionesFuturasProgramadas,
+        decimal? precioReserva = null)
     {
         var slugAnterior = Slug;
         if (Activo && !activo)
@@ -57,7 +66,7 @@ public partial class Curso : BaseAuditableEntity
             EnsurePuedeDesactivarse(tieneEdicionesFuturasProgramadas);
         }
 
-        Apply(nombre, slug, descripcionCorta, descripcion, precio, imagen, ubicacion, duracionTexto, orden);
+        Apply(nombre, slug, descripcionCorta, descripcion, precio, precioReserva, imagen, ubicacion, duracionTexto, orden);
         Activo = activo;
         return !string.Equals(slugAnterior, Slug, StringComparison.Ordinal);
     }
@@ -85,8 +94,8 @@ public partial class Curso : BaseAuditableEntity
     }
 
     private void Apply(
-        string nombre, string slug, string descripcionCorta, string descripcion, decimal precio, string imagen,
-        string? ubicacion, string? duracionTexto, int orden)
+        string nombre, string slug, string descripcionCorta, string descripcion, decimal precio, decimal? precioReserva,
+        string imagen, string? ubicacion, string? duracionTexto, int orden)
     {
         Nombre = Required(nombre, "El nombre del curso es obligatorio.");
         DescripcionCorta = Required(descripcionCorta, "La descripción corta del curso es obligatoria.");
@@ -103,9 +112,16 @@ public partial class Curso : BaseAuditableEntity
             throw new DomainException("El precio del curso debe ser mayor que cero.");
         }
 
+        var reserva = precioReserva ?? precio;
+        if (reserva <= 0 || reserva > precio)
+        {
+            throw new DomainException("La reserva de plaza debe ser mayor que cero y no superar el precio del curso.");
+        }
+
         Slug = slugNormalizado;
         Descripcion = descripcion?.Trim() ?? string.Empty;
         Precio = precio;
+        PrecioReserva = reserva;
         Ubicacion = Optional(ubicacion);
         DuracionTexto = Optional(duracionTexto);
         Orden = orden;

@@ -23,7 +23,8 @@ public class EditarCursoHandler(IAppDbContext dbContext, TimeProvider timeProvid
 
         var slugCambiado = curso.Actualizar(
             request.Nombre, request.Slug, request.DescripcionCorta, request.Descripcion, request.Precio, request.Imagen,
-            request.Ubicacion, request.DuracionTexto, request.Activo, request.Orden, tieneEdicionesFuturas);
+            request.Ubicacion, request.DuracionTexto, request.Activo, request.Orden, tieneEdicionesFuturas,
+            request.PrecioReserva);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

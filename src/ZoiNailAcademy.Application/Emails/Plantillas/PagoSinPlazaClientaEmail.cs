@@ -16,7 +16,8 @@ public static class PagoSinPlazaClientaEmail
                 ("Nombre", r.Nombre),
                 ("Teléfono", r.Telefono),
                 ("Email", r.Email),
-                ("Importe", EmailFormato.Importe(r.Importe)),
+                (r.ImporteEtiqueta, EmailFormato.Importe(r.Importe)),
+                ("Resto a pagar en persona", r.RestoTexto),
                 ("Pago en Stripe", r.StripePaymentIntentId))
             .Boton("Ver la edición", marca.Url($"/admin/ediciones/{r.EdicionId}"));
 

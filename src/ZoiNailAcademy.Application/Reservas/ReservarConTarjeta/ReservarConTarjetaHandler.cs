@@ -63,7 +63,10 @@ public class ReservarConTarjetaHandler(
     {
         var edicion = reserva.Edicion;
         var inicioLocal = TimeZoneInfo.ConvertTime(edicion.Inicio, appSettings.TimeZone);
-        var concepto = $"{edicion.Curso.Nombre} — {inicioLocal.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)}";
+        var fecha = inicioLocal.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+        var concepto = reserva.Importe < reserva.PrecioCurso
+            ? $"Reserva de plaza: {edicion.Curso.Nombre} — {fecha}"
+            : $"{edicion.Curso.Nombre} — {fecha}";
 
         return new CheckoutSesionRequest(
             reserva.Id,

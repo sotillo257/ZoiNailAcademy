@@ -24,16 +24,17 @@ public class ExportarAsistentesHandler(IAppDbContext dbContext, IAppSettings app
         var asistentes = await dbContext.Reservas
             .Where(r => r.EdicionId == request.EdicionId && r.Estado == EstadoReserva.Pagada)
             .OrderBy(r => r.PagadaEn).ThenBy(r => r.Id)
-            .Select(r => new { r.Codigo, r.Nombre, r.Telefono, r.Email, r.Metodo, r.Importe, r.PagadaEn })
+            .Select(r => new { r.Codigo, r.Nombre, r.Telefono, r.Email, r.Metodo, r.Importe, r.PrecioCurso, r.PagadaEn })
             .ToListAsync(cancellationToken);
 
         var zona = appSettings.TimeZone;
-        var csv = new CsvBuilder("Código", "Nombre", "Teléfono", "Email", "Método", "Importe", "Fecha de pago");
+        var csv = new CsvBuilder(
+            "Código", "Nombre", "Teléfono", "Email", "Método", "Importe", "Resto en persona", "Fecha de pago");
         foreach (var a in asistentes)
         {
             csv.Fila(
                 a.Codigo, a.Nombre, a.Telefono, a.Email, NombreMetodo(a.Metodo), FormatearImporte(a.Importe),
-                ListaEsperaAdminDto.FormatearFecha(a.PagadaEn, zona));
+                FormatearImporte(a.PrecioCurso - a.Importe), ListaEsperaAdminDto.FormatearFecha(a.PagadaEn, zona));
         }
 
         var inicio = TimeZoneInfo.ConvertTime(edicion.Inicio, zona).ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture);

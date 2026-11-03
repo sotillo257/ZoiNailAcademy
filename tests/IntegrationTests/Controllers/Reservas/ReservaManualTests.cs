@@ -16,7 +16,7 @@ public class ReservaManualTests(CustomWebApplicationFactory factory) : ReservasT
 
         var creada = await ReservarManualOkAsync(edicion.Id);
 
-        (creada.Estado, creada.Metodo, creada.Importe).Should().Be(("Pendiente", "Manual", 120m));
+        (creada.Estado, creada.Metodo, creada.Importe, creada.PrecioCurso).Should().Be(("Pendiente", "Manual", 120m, 120m));
         creada.DatosPago.Should().Be(new DatosPagoTestDto(
             CustomWebApplicationFactory.PagoTitular, CustomWebApplicationFactory.PagoIban, "600111222", creada.Codigo));
         creada.WhatsappUrl.Should().StartWith("https://wa.me/34600111222?text=");
@@ -27,6 +27,19 @@ public class ReservaManualTests(CustomWebApplicationFactory factory) : ReservasT
         reserva.Metodo.Should().Be(MetodoPago.Manual);
         reserva.StripeSessionId.Should().BeNull();
         EventRecorder.Count<ReservaManualCreadaEvent>(e => e.ReservaId == reserva.Id).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Manual_CourseWithSeatDeposit_ChargesTheDepositAndReturnsTheFullPrice()
+    {
+        var edicion = await CrearEdicionReservableAsync(precioReserva: 40m);
+
+        var creada = await ReservarManualOkAsync(edicion.Id);
+
+        (creada.Importe, creada.PrecioCurso).Should().Be((40m, 120m));
+        Uri.UnescapeDataString(creada.WhatsappUrl!).Should().EndWith("Importe: 40,00 €.");
+        var reserva = (await BuscarReservaAsync(creada.Codigo))!;
+        (reserva.Importe, reserva.PrecioCurso).Should().Be((40m, 120m));
     }
 
     [Fact]

@@ -14,7 +14,8 @@ public static class ReservaPagadaClientaEmail
                 ("Teléfono", r.Telefono),
                 ("Email", r.Email),
                 ("Pago", r.MetodoTexto),
-                ("Importe", EmailFormato.Importe(r.Importe)),
+                (r.ImporteEtiqueta, EmailFormato.Importe(r.Importe)),
+                ("Resto a pagar en persona", r.RestoTexto),
                 ("Plazas libres", plazasLibres.ToString(EmailFormato.Es)))
             .Boton("Ver la edición", marca.Url($"/admin/ediciones/{r.EdicionId}"));
 

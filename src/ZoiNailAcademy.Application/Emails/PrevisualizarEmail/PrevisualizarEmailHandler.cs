@@ -17,7 +17,7 @@ public class PrevisualizarEmailHandler(BandejaSalida bandeja, ReservaPublicaDtoF
         var now = timeProvider.GetUtcNow();
         var reserva = new ReservaEmailModelo(
             Guid.NewGuid(), Guid.NewGuid(), "CUR-7KQ4XM", "Curso de uñas acrílicas", "acrilico", new DateTimeOffset(now.AddDays(30).Date, TimeSpan.Zero).AddHours(9),
-            "Calle Ejemplo 1, Madrid", 149m, MetodoPago.Stripe, "Lucía Pérez", "lucia@example.com", "+34612345678",
+            "Calle Ejemplo 1, Madrid", 50m, 149m, MetodoPago.Stripe, "Lucía Pérez", "lucia@example.com", "+34612345678",
             now.AddHours(48), "pi_3Example123");
         var manual = reserva with { Metodo = MetodoPago.Manual };
         var datos = dtoFactory.DatosPago(manual.Codigo);

@@ -13,7 +13,8 @@ public static class ReservaManualClientaEmail
                 ("Nombre", r.Nombre),
                 ("Teléfono", r.Telefono),
                 ("Email", r.Email),
-                ("Importe", EmailFormato.Importe(r.Importe)),
+                (r.ImporteEtiqueta, EmailFormato.Importe(r.Importe)),
+                ("Resto a pagar en persona", r.RestoTexto),
                 ("Caduca", EmailFormato.FechaLarga(r.ExpiraEn, marca.Zona)))
             .Parrafo("Cuando te llegue el comprobante, confirma el pago desde el backoffice.")
             .Boton("Ver pendientes de pago", marca.Url("/admin/reservas"));

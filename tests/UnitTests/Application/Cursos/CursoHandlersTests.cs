@@ -57,7 +57,7 @@ public class ObtenerCursoAdminHandlerTests
 
         dto.Should().Be(new ZoiNailAcademy.Application.Cursos.CursoAdminDto(
             curso.Id, "Acrílico", "acrilico", "Curso de uñas acrílicas", "# Temario", 120m, "/cursos/acrilico.jpg",
-            "Madrid", "2 días", false, 3));
+            "Madrid", "2 días", false, 3, 120m));
     }
 
     [Fact]

@@ -25,7 +25,7 @@ public class CursoSeeder(AppDbContext dbContext, ILogger<CursoSeeder> logger)
         {
             dbContext.Cursos.Add(Curso.Create(
                 s.Nombre, s.Slug, s.DescripcionCorta, s.Descripcion, s.Precio, s.Imagen, s.Ubicacion, s.DuracionTexto,
-                s.Activo, s.Orden));
+                s.Activo, s.Orden, s.PrecioReserva));
             logger.LogInformation("Curso sembrado: {Slug}", s.Slug);
         }
 
@@ -42,5 +42,5 @@ public class CursoSeeder(AppDbContext dbContext, ILogger<CursoSeeder> logger)
 
     private sealed record CursoSemilla(
         string Nombre, string Slug, string DescripcionCorta, string Descripcion, decimal Precio, string Imagen,
-        string? Ubicacion, string? DuracionTexto, bool Activo, int Orden);
+        string? Ubicacion, string? DuracionTexto, bool Activo, int Orden, decimal? PrecioReserva = null);
 }

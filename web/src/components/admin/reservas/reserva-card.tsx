@@ -66,6 +66,9 @@ export function ReservaCard({
         </div>
         <div className="text-right">
           <p className="text-lg font-semibold">{formatearImporte(r.importe)}</p>
+          {r.precioCurso > r.importe ? (
+            <p className="text-xs text-muted-foreground">Resto en persona: {formatearImporte(r.precioCurso - r.importe)}</p>
+          ) : null}
           <EstadoBadge reserva={r} />
         </div>
       </div>

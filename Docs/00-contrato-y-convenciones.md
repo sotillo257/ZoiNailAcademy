@@ -103,12 +103,15 @@ type MetodoPago = 'Stripe' | 'Manual';
 
 interface CursoResumenDto {
   id: string; slug: string; nombre: string; descripcionCorta: string;
-  precio: number; imagen: string; orden: number;
+  precio: number;                 // precio total del curso
+  precioReserva: number;          // lo que se paga al reservar (señal); el resto, en persona. = precio si se paga entero
+  imagen: string; orden: number;
+  ubicacion: string | null; duracionTexto: string | null;
   proximaEdicion: EdicionPublicaDto | null;
+  ediciones: EdicionPublicaDto[]; // solo reservables o completas, futuras (para el calendario de la web)
 }
 interface CursoDetalleDto extends CursoResumenDto {
   descripcion: string;            // markdown o HTML saneado
-  ediciones: EdicionPublicaDto[]; // solo reservables o completas, futuras
 }
 interface EdicionPublicaDto {
   id: string; inicio: string;     // ISO con offset
@@ -117,7 +120,10 @@ interface EdicionPublicaDto {
 }
 interface ReservaPublicaDto {
   codigo: string; estado: EstadoReserva; metodo: MetodoPago;
-  curso: string; inicio: string; importe: number; expiraEn: string | null;
+  curso: string; inicio: string;
+  importe: number;                 // lo pagado (o por pagar) online: la señal
+  precioCurso: number;             // precio total; precioCurso - importe se paga en persona
+  expiraEn: string | null;
   datosPago: DatosPagoDto | null;  // solo si metodo=Manual y estado=Pendiente
   whatsappUrl: string | null;      // ídem
 }

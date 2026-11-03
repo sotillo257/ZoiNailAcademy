@@ -10,6 +10,9 @@ public interface ICursoCampos
     string DescripcionCorta { get; }
     string Descripcion { get; }
     decimal Precio { get; }
+
+    /// <summary>Seat deposit paid when booking; null means the whole price.</summary>
+    decimal? PrecioReserva { get; }
     string Imagen { get; }
     string? Ubicacion { get; }
     string? DuracionTexto { get; }
@@ -19,11 +22,11 @@ public interface ICursoCampos
 
 public sealed record CursoAdminDto(
     Guid Id, string Nombre, string Slug, string DescripcionCorta, string Descripcion, decimal Precio, string Imagen,
-    string? Ubicacion, string? DuracionTexto, bool Activo, int Orden)
+    string? Ubicacion, string? DuracionTexto, bool Activo, int Orden, decimal PrecioReserva)
 {
     public static CursoAdminDto From(Curso c) => new(
         c.Id, c.Nombre, c.Slug, c.DescripcionCorta, c.Descripcion, c.Precio, c.Imagen, c.Ubicacion, c.DuracionTexto,
-        c.Activo, c.Orden);
+        c.Activo, c.Orden, c.PrecioReserva);
 }
 
 public sealed record CursoOpcionDto(Guid Id, string Nombre, string Slug, bool Activo);

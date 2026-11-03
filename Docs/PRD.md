@@ -78,7 +78,8 @@ Cinco entidades de negocio: Curso, Edición, Reserva (una sola para tarjeta y tr
 | Id | Guid | |
 | Nombre, Slug | string | Slug único, para URLs |
 | DescripcionCorta, Descripcion | string | |
-| Precio | decimal (EUR) | Pendiente confirmar si incluye IVA |
+| Precio | decimal (EUR) | Precio total. Pendiente confirmar si incluye IVA |
+| PrecioReserva | decimal (EUR) | Señal que se paga al reservar (tarjeta o transferencia/Bizum); el resto se paga en persona, fuera de la web. Si no se indica, igual a `Precio` |
 | Imagen | string | Ruta en `public/` del front |
 | Ubicacion, DuracionTexto | string? | Para la ficha y los emails |
 | Activo, Orden | bool, int | Orden de aparición en la web |
@@ -106,7 +107,8 @@ Plazas libres = Plazas − reservas Pagadas − reservas Pendientes no caducadas
 | Metodo | enum | Stripe, Manual |
 | Estado | enum | Pendiente, Pagada, Expirada, Cancelada |
 | Nombre, Email, Telefono | string | Teléfono obligatorio, normalizado E.164 |
-| Importe | decimal (EUR) | Copia del precio al reservar |
+| Importe | decimal (EUR) | Lo que se paga online: copia de `PrecioReserva` al reservar |
+| PrecioCurso | decimal (EUR) | Copia de `Precio` al reservar; `PrecioCurso − Importe` se paga en persona |
 | StripeSessionId | string? | Solo método Stripe |
 | ExpiraEn | DateTimeOffset | Caducidad del bloqueo de plaza |
 | RequiereRevision | bool | Pago recibido sin plaza disponible |

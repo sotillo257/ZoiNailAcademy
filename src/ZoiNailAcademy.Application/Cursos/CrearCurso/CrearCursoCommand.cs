@@ -5,5 +5,5 @@ namespace ZoiNailAcademy.Application.Cursos.CrearCurso;
 
 public sealed record CrearCursoCommand(
     string Nombre, string Slug, string DescripcionCorta, string Descripcion, decimal Precio, string Imagen,
-    string? Ubicacion, string? DuracionTexto, bool Activo, int Orden)
+    string? Ubicacion, string? DuracionTexto, bool Activo, int Orden, decimal? PrecioReserva = null)
     : IRequest<Result<CursoAdminDto>>, ICursoCampos;

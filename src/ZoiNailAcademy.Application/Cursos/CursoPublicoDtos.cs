@@ -2,13 +2,16 @@ using ZoiNailAcademy.Application.Ediciones;
 
 namespace ZoiNailAcademy.Application.Cursos;
 
+/// <param name="PrecioReserva">Paid online when booking; the rest (<c>Precio - PrecioReserva</c>) in person.</param>
 public sealed record CursoResumenDto(
-    Guid Id, string Slug, string Nombre, string DescripcionCorta, decimal Precio, string Imagen, int Orden,
-    EdicionPublicaDto? ProximaEdicion);
+    Guid Id, string Slug, string Nombre, string DescripcionCorta, decimal Precio, decimal PrecioReserva, string Imagen,
+    int Orden, string? Ubicacion, string? DuracionTexto, EdicionPublicaDto? ProximaEdicion,
+    IReadOnlyList<EdicionPublicaDto> Ediciones);
 
 public sealed record CursoDetalleDto(
-    Guid Id, string Slug, string Nombre, string DescripcionCorta, decimal Precio, string Imagen, int Orden,
-    EdicionPublicaDto? ProximaEdicion, string Descripcion, IReadOnlyList<EdicionPublicaDto> Ediciones);
+    Guid Id, string Slug, string Nombre, string DescripcionCorta, decimal Precio, decimal PrecioReserva, string Imagen,
+    int Orden, string? Ubicacion, string? DuracionTexto, EdicionPublicaDto? ProximaEdicion, string Descripcion,
+    IReadOnlyList<EdicionPublicaDto> Ediciones);
 
 public static class ProximaEdicion
 {

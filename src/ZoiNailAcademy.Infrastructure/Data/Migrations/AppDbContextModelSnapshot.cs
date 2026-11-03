@@ -99,6 +99,10 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<decimal>("PrecioReserva")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -434,6 +438,10 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
 
                     b.Property<DateTimeOffset?>("PagadaEn")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("PrecioCurso")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<bool>("RequiereRevision")
                         .HasColumnType("boolean");
