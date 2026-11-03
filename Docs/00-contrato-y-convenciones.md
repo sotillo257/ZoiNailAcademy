@@ -88,6 +88,7 @@ Este documento es la referencia compartida por las 11 features. Si una spec y es
 
 | Método | Ruta | Feature |
 | --- | --- | --- |
+| GET | `/api/admin/cursos/{id}` | F02 (`CursoAdminDto` con todos los campos, para la pantalla de editar curso) |
 | POST | `/api/admin/cursos` | F02 |
 | PUT | `/api/admin/cursos/{id}` | F02 |
 | DELETE | `/api/admin/cursos/{id}` | F02 (desactiva, no borra) |

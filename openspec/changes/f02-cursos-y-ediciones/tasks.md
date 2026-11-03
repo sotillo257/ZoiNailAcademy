@@ -45,6 +45,7 @@
 - [x] 8.3 Edition CRUD: create (event / no event, validation, unknown course), list (filter, past), stale `version` → `409 concurrencia`, seats below occupied → `409`, date change with/without confirmation, events only on `Oculta → Programada`, cancellation warning and no reactivation, started edition only notes, delete with/without bookings
 - [x] 8.4 Course CRUD: Admin gets `403` on create, SuperAdmin creates, duplicate slug `400`, slug warning, deactivation with/without future scheduled editions; the dynamic `AuthorizationTests` cover the new `/api/admin` routes
 - [x] 8.5 Seeder idempotency: running it again neither duplicates nor overwrites courses
+- [x] 8.6 `GET /api/admin/cursos/{id}` (SuperAdmin, `CursoAdminDto`, inactive courses included, `404`), added after F11 for the F09 edit screen
 
 ## 9. Manual
 

@@ -7,6 +7,7 @@ Lo que falta para terminar y poner en producción la API. Al cerrar un punto, m�
 ## 1. Otras features
 
 - [ ] **F08 – front público:** página `/baja?token=&curso=`. Pide confirmación con el botón "Darme de baja de los avisos", llama a `POST /api/lista-espera/baja` con `{ token }` y muestra "Ya no te avisaremos de nuevas fechas de {curso}" (el nombre se saca del slug con `GET /api/cursos/{slug}`). Nunca debe dar de baja con un simple `GET`. Hay que bloquear `/baja` en `robots.ts`.
+- [ ] **F09 – front del backoffice:** la pantalla de editar curso (solo SuperAdmin) carga los datos con `GET /api/admin/cursos/{id}` (`CursoAdminDto`) y guarda con `PUT`.
 - [ ] **F09 – front del backoffice:** indicador "Se dio de baja de avisos" en la tarjeta de la lista de espera, con el campo `baja` de `ListaEsperaAdminDto`.
 - [ ] **F08/F09:** regenerar los tipos TypeScript del front desde Swagger (tarea manual, F02 9.2).
 - [ ] **F10 – infraestructura:** desplegar en Railway, dominio y DNS, Stripe, CI, variables y checklist de producción.
@@ -42,11 +43,7 @@ Lo que falta para terminar y poner en producción la API. Al cerrar un punto, m�
 - [ ] Responder las preguntas abiertas de `Docs/README.md` ("Antes de empezar") y de `Docs/PRD.md` ("Preguntas abiertas"): IVA y facturas, presencial u online, datos bancarios, horas de cierre, pantallas del Figma, textos legales e imágenes.
 - [ ] Decirle por escrito que el aviso de nuevas fechas (F11) es un **regalo** (F11 5.2).
 
-## 5. Decisiones pendientes
-
-- [ ] **Editar un curso desde el backoffice:** el contrato no tiene un `GET /api/admin/cursos/{id}` con todos los campos. El selector (`GET /api/admin/cursos`) solo devuelve `{id, nombre, slug, activo}`, así que la pantalla de editar curso de F09 no tendrá de dónde leer los campos completos. Propuesta: añadir ese endpoint (solo SuperAdmin, como `PUT`), cambiando antes el contrato (`Docs/00-contrato-y-convenciones.md`). Falta decidirlo.
-
-## 6. Mantenimiento de OpenSpec
+## 5. Mantenimiento de OpenSpec
 
 - [ ] Sincronizar y archivar los cambios terminados `f01` … `f11` (`/opsx:sync`, `/opsx:archive`). Ahora `openspec/specs/` solo contiene las specs de la plantilla.
 - [ ] Borrar `openspec/specs/notes`: la feature Notes se eliminó en F01.

@@ -53,7 +53,7 @@ At startup, after the users are seeded, the system SHALL insert every course of 
 - **[INTEGRATION]**
 
 ### Requirement: Course management is SuperAdmin-only
-`POST /api/admin/cursos`, `PUT /api/admin/cursos/{id}` and `DELETE /api/admin/cursos/{id}` SHALL require the `SuperAdmin` policy. Input MUST be validated (field lengths of the data model, slug format, `precio > 0`, `orden >= 0`) with `400` and errors per field; a slug already used by another course MUST be a `400` error on `slug`. `POST` returns `201 CursoAdminDto`. `PUT` returns `200 {curso, avisos}`, and `avisos` MUST contain a warning when the slug changed. `DELETE` MUST deactivate the course (never delete the row) and return `204`.
+`GET /api/admin/cursos/{id}`, `POST /api/admin/cursos`, `PUT /api/admin/cursos/{id}` and `DELETE /api/admin/cursos/{id}` SHALL require the `SuperAdmin` policy. `GET` returns `200 CursoAdminDto` with every field of the course, active or not (`404 no_encontrado` when it does not exist), so the edit screen can be filled. Input MUST be validated (field lengths of the data model, slug format, `precio > 0`, `orden >= 0`) with `400` and errors per field; a slug already used by another course MUST be a `400` error on `slug`. `POST` returns `201 CursoAdminDto`. `PUT` returns `200 {curso, avisos}`, and `avisos` MUST contain a warning when the slug changed. `DELETE` MUST deactivate the course (never delete the row) and return `204`.
 
 #### Scenario: Admin cannot create courses
 - **WHEN** an Admin calls `POST /api/admin/cursos` with a valid body
@@ -64,6 +64,11 @@ At startup, after the users are seeded, the system SHALL insert every course of 
 - **WHEN** a SuperAdmin calls `POST /api/admin/cursos` with a valid body
 - **THEN** the response is `201` and the course is listed by `GET /api/admin/cursos`
 - **[INTEGRATION]**
+
+#### Scenario: SuperAdmin reads a course to edit it
+- **WHEN** a SuperAdmin calls `GET /api/admin/cursos/{id}` for an inactive course, an Admin calls it, and a SuperAdmin calls it for an unknown id
+- **THEN** the responses are `200` with every field, `403` and `404 no_encontrado`
+- **[INTEGRATION]** **[UNIT]**
 
 #### Scenario: Duplicate slug is rejected
 - **WHEN** a SuperAdmin creates a course with the slug of an existing course
