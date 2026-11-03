@@ -1,22 +1,40 @@
+using Microsoft.EntityFrameworkCore;
 using ZoiNailAcademy.Application.Common.Interfaces;
+using ZoiNailAcademy.Domain.Entities;
+using ZoiNailAcademy.Domain.Enums;
 
 namespace ZoiNailAcademy.Application.Ediciones;
 
 /// <summary>
-/// F02 has no bookings yet, so every seat is free. F03 replaces these bodies with one query over
-/// <c>Reservas</c>, grouped by <c>EdicionId</c> and filtered with the rule of
-/// <c>PlazasCalculator.OcupaPlaza</c> (Pagada, or Pendiente with ExpiraEn &gt; now).
+/// Occupancy from the <c>Reservas</c> table: one grouped query for all the requested editions, filtered
+/// with <see cref="Reserva.OcupaPlazaEn"/> (paid, or pending and not expired).
 /// </summary>
-public class OcupacionReader : IOcupacionReader
+public class OcupacionReader(IAppDbContext dbContext, TimeProvider timeProvider) : IOcupacionReader
 {
-    private static readonly IReadOnlyDictionary<Guid, Ocupacion> SinReservas = new Dictionary<Guid, Ocupacion>();
+    public async Task<IReadOnlyDictionary<Guid, Ocupacion>> LeerAsync(
+        IReadOnlyCollection<Guid> edicionIds, CancellationToken cancellationToken)
+    {
+        if (edicionIds.Count == 0)
+        {
+            return new Dictionary<Guid, Ocupacion>();
+        }
 
-    public Task<IReadOnlyDictionary<Guid, Ocupacion>> LeerAsync(
-        IReadOnlyCollection<Guid> edicionIds, CancellationToken cancellationToken) =>
-        // TODO F03: GroupBy over IAppDbContext.Reservas (Pagada / Pendiente vigente) with TimeProvider.
-        Task.FromResult(SinReservas);
+        var now = timeProvider.GetUtcNow();
+        var filas = await dbContext.Reservas
+            .Where(r => edicionIds.Contains(r.EdicionId))
+            .Where(Reserva.OcupaPlazaEn(now))
+            .GroupBy(r => r.EdicionId)
+            .Select(g => new
+            {
+                EdicionId = g.Key,
+                Pagadas = g.Count(r => r.Estado == EstadoReserva.Pagada),
+                Pendientes = g.Count(r => r.Estado == EstadoReserva.Pendiente)
+            })
+            .ToListAsync(cancellationToken);
+
+        return filas.ToDictionary(f => f.EdicionId, f => new Ocupacion(f.Pagadas, f.Pendientes));
+    }
 
     public Task<bool> TieneReservasAsync(Guid edicionId, CancellationToken cancellationToken) =>
-        // TODO F03: Reservas.AnyAsync(r => r.EdicionId == edicionId).
-        Task.FromResult(false);
+        dbContext.Reservas.AnyAsync(r => r.EdicionId == edicionId, cancellationToken);
 }

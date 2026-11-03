@@ -1,5 +1,6 @@
 using ZoiNailAcademy.Domain.Entities;
 using ZoiNailAcademy.Domain.Enums;
+using ZoiNailAcademy.Domain.Services;
 
 namespace UnitTests.TestSupport;
 
@@ -18,4 +19,11 @@ public static class CatalogoFactory
         EstadoEdicion estado = EstadoEdicion.Programada, string? notas = null) =>
         ZoiNailAcademy.Domain.Entities.Edicion.Create(
             curso ?? Curso(), inicio ?? Now.AddDays(30), plazas, estado, notas, Now);
+
+    public static Reserva Reserva(
+        Edicion? edicion = null, MetodoPago metodo = MetodoPago.Stripe, string? email = null, string? telefono = null,
+        DateTimeOffset? expiraEn = null) =>
+        ZoiNailAcademy.Domain.Entities.Reserva.Create(
+            edicion ?? Edicion(), CodigoReserva.Generar(), metodo, "Lucía Pérez", email ?? "lucia@mail.com",
+            telefono ?? "+34612345678", expiraEn ?? Now.AddMinutes(35), Now);
 }

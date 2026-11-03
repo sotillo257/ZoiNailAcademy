@@ -1,8 +1,10 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ZoiNailAcademy.Domain.Entities;
 using ZoiNailAcademy.Domain.Enums;
+using ZoiNailAcademy.Domain.Services;
 using ZoiNailAcademy.Infrastructure.Data;
 
 namespace IntegrationTests.Controllers.Catalogo;
@@ -51,6 +53,38 @@ public abstract class CatalogoTestBase(CustomWebApplicationFactory factory) : In
         db.Ediciones.Add(edicion);
         await db.SaveChangesAsync();
         return edicion;
+    }
+
+    private static int _contactoCounter;
+
+    /// <summary>Unique valid Spanish mobile number (E.164) for test contacts.</summary>
+    protected static string UniqueTelefono() => $"+346{Interlocked.Increment(ref _contactoCounter) % 100_000_000:D8}";
+
+    /// <summary>
+    /// Inserts bookings directly in the database. <paramref name="pendientesCaducadas"/> are still
+    /// <c>Pendiente</c> but their <c>ExpiraEn</c> has passed, so they hold no seat.
+    /// </summary>
+    protected async Task CrearReservasEnBdAsync(
+        Guid edicionId, int pagadas = 0, int pendientes = 0, int expiradas = 0, int canceladas = 0, int pendientesCaducadas = 0)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var edicion = await db.Ediciones.Include(e => e.Curso).SingleAsync(e => e.Id == edicionId);
+        var now = Now;
+
+        Reserva Nueva(DateTimeOffset expiraEn, DateTimeOffset creadaEn) => Reserva.Create(
+            edicion, CodigoReserva.Generar(), MetodoPago.Stripe, "Reserva de test", $"{Guid.NewGuid():N}@mail.test",
+            UniqueTelefono(), expiraEn, creadaEn);
+
+        var reservas = new List<Reserva>();
+        for (var i = 0; i < pagadas; i++) { var r = Nueva(now.AddMinutes(35), now); r.Pagar(now); reservas.Add(r); }
+        for (var i = 0; i < pendientes; i++) { reservas.Add(Nueva(now.AddMinutes(35), now)); }
+        for (var i = 0; i < expiradas; i++) { var r = Nueva(now.AddMinutes(35), now); r.Expirar(now); reservas.Add(r); }
+        for (var i = 0; i < canceladas; i++) { var r = Nueva(now.AddMinutes(35), now); r.Cancelar(now); reservas.Add(r); }
+        for (var i = 0; i < pendientesCaducadas; i++) { reservas.Add(Nueva(now.AddMinutes(-1), now.AddHours(-1))); }
+
+        db.Reservas.AddRange(reservas);
+        await db.SaveChangesAsync();
     }
 
     // Read as string (buffered) so a test can read the same body more than once.

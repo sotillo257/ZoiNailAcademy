@@ -1,4 +1,6 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
+using ZoiNailAcademy.Application.Common.Events;
 using Microsoft.EntityFrameworkCore;
 using ZoiNailAcademy.Application.Common;
 using ZoiNailAcademy.Application.Common.Exceptions;
@@ -9,7 +11,8 @@ using ZoiNailAcademy.Domain.Enums;
 namespace ZoiNailAcademy.Application.Ediciones.CrearEdicion;
 
 public class CrearEdicionHandler(
-    IAppDbContext dbContext, IPublisher publisher, IReservasSettings settings, TimeProvider timeProvider)
+    IAppDbContext dbContext, IPublisher publisher, IReservasSettings settings, TimeProvider timeProvider,
+    ILogger<CrearEdicionHandler> logger)
     : IRequestHandler<CrearEdicionCommand, Result<EdicionAdminDto>>
 {
     public async Task<Result<EdicionAdminDto>> Handle(CrearEdicionCommand request, CancellationToken cancellationToken)
@@ -26,7 +29,7 @@ public class CrearEdicionHandler(
 
         if (edicion.Estado == EstadoEdicion.Programada)
         {
-            await publisher.Publish(new EdicionPublicadaEvent(edicion.Id), cancellationToken);
+            await publisher.PublicarTrasCommitAsync(new EdicionPublicadaEvent(edicion.Id), logger, cancellationToken);
         }
 
         return Result.Success(EdicionAdminDto.From(edicion, Ocupacion.Ninguna, now, settings.CierreAntesDeInicio));

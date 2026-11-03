@@ -8,6 +8,7 @@ using Microsoft.Extensions.Time.Testing;
 using MediatR;
 using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Application.Ediciones;
+using ZoiNailAcademy.Application.Reservas;
 using Testcontainers.PostgreSql;
 using ZoiNailAcademy.Infrastructure.Data;
 
@@ -28,6 +29,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     /// the real clock; tests that move time forward create their own host with their own clock.
     /// </summary>
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.UtcNow);
+
+    public const string StripeWebhookSecret = "whsec_test_integration_secret";
+
+    /// <summary>Stripe without network, shared by the tests (sessions are keyed by id).</summary>
+    public FakeStripeGateway StripeGateway { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -55,6 +61,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("SuperAdmin:SeedEmail", SuperAdminEmail);
         builder.UseSetting("SuperAdmin:SeedPassword", SuperAdminPassword);
         builder.UseSetting("SuperAdmin:SeedNombre", "Desarrollador");
+        builder.UseSetting("App:BaseUrl", "https://web.test");
+        builder.UseSetting("Stripe:WebhookSecret", StripeWebhookSecret);
 
         builder.ConfigureTestServices(services =>
         {
@@ -62,9 +70,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             services.AddTransient<IStartupFilter, ProtectedTestEndpointStartupFilter>();
             services.AddControllers().AddApplicationPart(typeof(TestAdminController).Assembly);
 
-            services.AddScoped<OcupacionReader>();
-            services.AddScoped<IOcupacionReader, TestOcupacionReader>();
-            services.AddTransient<INotificationHandler<EdicionPublicadaEvent>, RecordingEdicionPublicadaHandler>();
+            services.AddSingleton(StripeGateway);
+            services.AddSingleton<IStripeGateway>(StripeGateway);
+            services.AddTransient<INotificationHandler<EdicionPublicadaEvent>, RecordingHandler<EdicionPublicadaEvent>>();
+            services.AddTransient<INotificationHandler<ReservaPagadaEvent>, RecordingHandler<ReservaPagadaEvent>>();
+            services.AddTransient<INotificationHandler<ReservaExpiradaEvent>, RecordingHandler<ReservaExpiradaEvent>>();
+            services.AddTransient<INotificationHandler<PagoTrasCaducidadSinPlazaEvent>, RecordingHandler<PagoTrasCaducidadSinPlazaEvent>>();
         });
     }
 }

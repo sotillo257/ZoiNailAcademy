@@ -1,4 +1,6 @@
+using FluentAssertions;
 using MediatR;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Time.Testing;
 using MockQueryable.Moq;
 using Moq;
@@ -20,6 +22,10 @@ public class CatalogoTestContext
     public List<Curso> Cursos { get; private set; } = [];
     public List<Edicion> Ediciones { get; private set; } = [];
     public Dictionary<Guid, Ocupacion> Ocupaciones { get; } = [];
+    public List<Reserva> Reservas { get; private set; } = [];
+    public List<StripeEvento> StripeEventos { get; private set; } = [];
+    public Mock<IDbContextTransaction> Transaction { get; } = new();
+    public Mock<IAppSettings> AppSettings { get; } = new();
 
     public CatalogoTestContext()
     {
@@ -28,9 +34,40 @@ public class CatalogoTestContext
         OcupacionReader
             .Setup(x => x.LeerAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => Ocupaciones);
+        Settings.Setup(x => x.StripeBloqueo).Returns(TimeSpan.FromMinutes(30));
+        Settings.Setup(x => x.MaxPendientesPorContacto).Returns(2);
+        AppSettings.Setup(x => x.BaseUrl).Returns("https://web.test");
+        AppSettings.Setup(x => x.TimeZone).Returns(TimeZoneInfo.FindSystemTimeZoneById("Europe/Madrid"));
+        DbContext.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
         SetupCursos();
         SetupEdiciones();
+        SetupReservas();
+        SetupStripeEventos();
     }
+
+    public void SetupReservas(params Reserva[] reservas)
+    {
+        Reservas = reservas.ToList();
+        var mockSet = Reservas.BuildMockDbSet();
+        mockSet.Setup(x => x.Add(It.IsAny<Reserva>())).Callback<Reserva>(Reservas.Add);
+        DbContext.Setup(x => x.Reservas).Returns(mockSet.Object);
+    }
+
+    public void SetupStripeEventos(params StripeEvento[] eventos)
+    {
+        StripeEventos = eventos.ToList();
+        var mockSet = StripeEventos.BuildMockDbSet();
+        mockSet.Setup(x => x.Add(It.IsAny<StripeEvento>())).Callback<StripeEvento>(StripeEventos.Add);
+        DbContext.Setup(x => x.StripeEventos).Returns(mockSet.Object);
+    }
+
+    public void VerifyCommitted(Times times) =>
+        Transaction.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), times);
+
+    /// <summary>Post-commit events are published typed as <see cref="INotification"/> (MediatR dispatches on the runtime type).</summary>
+    public void VerifyPublished<TEvent>(Func<TEvent, bool> match, Times times) where TEvent : INotification =>
+        Publisher.Verify(
+            x => x.Publish(It.Is<INotification>(e => e is TEvent && match((TEvent)e)), It.IsAny<CancellationToken>()), times);
 
     public EdicionesPublicas CreateEdicionesPublicas() =>
         new(DbContext.Object, OcupacionReader.Object, Settings.Object, TimeProvider);
@@ -53,10 +90,8 @@ public class CatalogoTestContext
     }
 
     public void VerifyPublished(Guid edicionId, Times times) =>
-        Publisher.Verify(
-            x => x.Publish(It.Is<EdicionPublicadaEvent>(e => e.EdicionId == edicionId), It.IsAny<CancellationToken>()),
-            times);
+        VerifyPublished<EdicionPublicadaEvent>(e => e.EdicionId == edicionId, times);
 
-    public void VerifyNothingPublished() =>
-        Publisher.Verify(x => x.Publish(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
+    /// <summary>No Publish call at all, whatever its generic type argument.</summary>
+    public void VerifyNothingPublished() => Publisher.Invocations.Should().BeEmpty();
 }

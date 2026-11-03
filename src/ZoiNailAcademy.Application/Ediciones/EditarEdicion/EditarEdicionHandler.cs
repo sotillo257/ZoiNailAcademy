@@ -1,4 +1,6 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
+using ZoiNailAcademy.Application.Common.Events;
 using Microsoft.EntityFrameworkCore;
 using ZoiNailAcademy.Application.Common;
 using ZoiNailAcademy.Application.Common.Exceptions;
@@ -9,7 +11,8 @@ namespace ZoiNailAcademy.Application.Ediciones.EditarEdicion;
 
 public class EditarEdicionHandler(
     IAppDbContext dbContext, IOcupacionReader ocupacionReader, IPublisher publisher, IReservasSettings settings,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    ILogger<EditarEdicionHandler> logger)
     : IRequestHandler<EditarEdicionCommand, Result<EdicionEditadaDto>>
 {
     public const string ConcurrenciaMessage =
@@ -47,7 +50,7 @@ public class EditarEdicionHandler(
 
         if (cambio.Publicada)
         {
-            await publisher.Publish(new EdicionPublicadaEvent(edicion.Id), cancellationToken);
+            await publisher.PublicarTrasCommitAsync(new EdicionPublicadaEvent(edicion.Id), logger, cancellationToken);
         }
 
         // TODO F04: when cambio.Cancelada, publish the event that cancels the pending bookings of this edition.

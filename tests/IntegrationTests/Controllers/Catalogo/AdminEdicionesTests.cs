@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using IntegrationTests.TestSupport;
+using ZoiNailAcademy.Application.Ediciones;
 using ZoiNailAcademy.Domain.Entities;
 using ZoiNailAcademy.Domain.Enums;
 
@@ -53,7 +54,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
         edicion.Notas.Should().Be("Sala 2");
         uint.Parse(edicion.Version).Should().BeGreaterThan(0);
         response.Headers.Location!.ToString().Should().EndWith($"/api/admin/ediciones/{edicion.Id}");
-        RecordingEdicionPublicadaHandler.CountFor(edicion.Id).Should().Be(1);
+        EventRecorder.Count<EdicionPublicadaEvent>(e => e.EdicionId == edicion.Id).Should().Be(1);
     }
 
     [Fact]
@@ -70,7 +71,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var edicion = await ReadAsync<EdicionAdminTestDto>(response);
         edicion.Reservable.Should().BeFalse();
-        RecordingEdicionPublicadaHandler.CountFor(edicion.Id).Should().Be(0);
+        EventRecorder.Count<EdicionPublicadaEvent>(e => e.EdicionId == edicion.Id).Should().Be(0);
     }
 
     [Fact]
@@ -111,7 +112,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
         var proxima = await CrearEdicionEnBdAsync(curso, Now.AddDays(5));
         var pasada = await CrearEdicionEnBdAsync(curso, Now.AddDays(-10));
         var otroCurso = await CrearEdicionEnBdAsync(await CrearCursoEnBdAsync(), Now.AddDays(6));
-        TestOcupacionReader.Set(proxima.Id, pagadas: 3, pendientes: 2);
+        await CrearReservasEnBdAsync(proxima.Id, pagadas: 3, pendientes: 2);
 
         var sinPasadas = await ReadAsync<List<EdicionAdminTestDto>>(
             await SendAsync(HttpMethod.Get, $"/api/admin/ediciones?cursoId={curso.Id}", accessToken: token));
@@ -167,7 +168,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
     {
         var token = await AdminTokenAsync();
         var edicion = await GetAsync((await CrearEdicionEnBdAsync(await CrearCursoEnBdAsync(), Now.AddDays(20))).Id, token);
-        TestOcupacionReader.Set(edicion.Id, pagadas: 3, pendientes: 2);
+        await CrearReservasEnBdAsync(edicion.Id, pagadas: 3, pendientes: 2);
 
         var response = await PutAsync(edicion.Id, Body(edicion, plazas: 4), token);
 
@@ -180,7 +181,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
     {
         var token = await AdminTokenAsync();
         var edicion = await GetAsync((await CrearEdicionEnBdAsync(await CrearCursoEnBdAsync(), Now.AddDays(20))).Id, token);
-        TestOcupacionReader.Set(edicion.Id, pagadas: 2, pendientes: 1);
+        await CrearReservasEnBdAsync(edicion.Id, pagadas: 2, pendientes: 1);
         var nuevaFecha = edicion.Inicio.AddDays(7);
 
         var sinConfirmar = await PutAsync(edicion.Id, Body(edicion, inicio: nuevaFecha), token);
@@ -207,9 +208,9 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
         var cancelar = await GetAsync(aCancelar.Id, token);
         (await PutAsync(aCancelar.Id, Body(cancelar, estado: "Cancelada"), token)).StatusCode.Should().Be(HttpStatusCode.OK);
 
-        RecordingEdicionPublicadaHandler.CountFor(oculta.Id).Should().Be(1);
-        RecordingEdicionPublicadaHandler.CountFor(programada.Id).Should().Be(0);
-        RecordingEdicionPublicadaHandler.CountFor(aCancelar.Id).Should().Be(0);
+        EventRecorder.Count<EdicionPublicadaEvent>(e => e.EdicionId == oculta.Id).Should().Be(1);
+        EventRecorder.Count<EdicionPublicadaEvent>(e => e.EdicionId == programada.Id).Should().Be(0);
+        EventRecorder.Count<EdicionPublicadaEvent>(e => e.EdicionId == aCancelar.Id).Should().Be(0);
     }
 
     [Fact]
@@ -217,7 +218,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
     {
         var token = await AdminTokenAsync();
         var edicion = await GetAsync((await CrearEdicionEnBdAsync(await CrearCursoEnBdAsync(), Now.AddDays(20))).Id, token);
-        TestOcupacionReader.Set(edicion.Id, pagadas: 1, pendientes: 1);
+        await CrearReservasEnBdAsync(edicion.Id, pagadas: 1, pendientes: 1);
 
         var cancelar = await PutAsync(edicion.Id, Body(edicion, estado: "Cancelada"), token);
         var cancelada = (await ReadAsync<EdicionEditadaTestDto>(cancelar)).Edicion;
@@ -235,7 +236,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
     {
         var token = await AdminTokenAsync();
         var edicion = await GetAsync((await CrearEdicionEnBdAsync(await CrearCursoEnBdAsync(), Now.AddDays(20))).Id, token);
-        TestOcupacionReader.Set(edicion.Id, pagadas: 2);
+        await CrearReservasEnBdAsync(edicion.Id, pagadas: 2);
 
         var response = await PutAsync(edicion.Id, Body(edicion, estado: "Cancelada"), token);
 
@@ -286,7 +287,7 @@ public class AdminEdicionesTests(CustomWebApplicationFactory factory) : Catalogo
     {
         var token = await AdminTokenAsync();
         var edicion = await CrearEdicionEnBdAsync(await CrearCursoEnBdAsync(), Now.AddDays(20));
-        TestOcupacionReader.SetSoloReservasSinPlaza(edicion.Id);
+        await CrearReservasEnBdAsync(edicion.Id, expiradas: 1);
 
         var response = await SendAsync(HttpMethod.Delete, $"/api/admin/ediciones/{edicion.Id}", accessToken: token);
 
