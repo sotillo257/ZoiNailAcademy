@@ -14,6 +14,8 @@ API REST de la web de venta de cursos de Zoi Nail Academy (.NET 10, Clean Archit
 - **Tests**: xUnit + FluentAssertions + Moq (unitarios) y `WebApplicationFactory` + Testcontainers PostgreSQL + `FakeTimeProvider` (integración)
 - **Despliegue**: Dockerfile multi-stage para Railway, CI con GitHub Actions
 
+El front (Next.js, de momento solo el backoffice `/admin`) está en [`web/`](web/README.md).
+
 ## Requisitos
 
 - .NET 10 SDK

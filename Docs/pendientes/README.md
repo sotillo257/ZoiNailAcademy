@@ -2,14 +2,15 @@
 
 Lo que falta para terminar y poner en producción la API. Al cerrar un punto, márcalo aquí y también en el `tasks.md` del cambio de OpenSpec correspondiente (si viene de ahí).
 
-Última revisión: 03/11/2026, tras implementar F11 en la API.
+Última revisión: 03/11/2026, tras implementar F09 (backoffice en `web/`).
 
 ## 1. Otras features
 
 - [ ] **F08 – front público:** página `/baja?token=&curso=`. Pide confirmación con el botón "Darme de baja de los avisos", llama a `POST /api/lista-espera/baja` con `{ token }` y muestra "Ya no te avisaremos de nuevas fechas de {curso}" (el nombre se saca del slug con `GET /api/cursos/{slug}`). Nunca debe dar de baja con un simple `GET`. Hay que bloquear `/baja` en `robots.ts`.
-- [ ] **F09 – front del backoffice:** la pantalla de editar curso (solo SuperAdmin) carga los datos con `GET /api/admin/cursos/{id}` (`CursoAdminDto`) y guarda con `PUT`.
-- [ ] **F09 – front del backoffice:** indicador "Se dio de baja de avisos" en la tarjeta de la lista de espera, con el campo `baja` de `ListaEsperaAdminDto`.
-- [ ] **F08/F09:** regenerar los tipos TypeScript del front desde Swagger (tarea manual, F02 9.2).
+- [x] **F09 – front del backoffice:** la pantalla de editar curso (solo SuperAdmin) carga los datos con `GET /api/admin/cursos/{id}` (`CursoAdminDto`) y guarda con `PUT`.
+- [x] **F09 – front del backoffice:** indicador "Se dio de baja de avisos" en la tarjeta de la lista de espera, con el campo `baja` de `ListaEsperaAdminDto`.
+- [ ] **F08/F09:** regenerar los tipos TypeScript del front desde Swagger (`cd web && npm run api:types`, tarea manual, F02 9.2). Los DTOs del backoffice están escritos a mano en `web/src/lib/admin/types.ts`: compararlos con el `schema.d.ts` generado.
+- [ ] **F09:** el front está en `web/` (Next.js) y por ahora solo tiene el backoffice; la web pública (F08) se añade en el mismo proyecto. Falta su `Dockerfile` y el servicio en Railway (F10).
 - [ ] **F10 – infraestructura:** desplegar en Railway, dominio y DNS, Stripe, CI, variables y checklist de producción.
 
 ## 2. Configuración en producción (Railway)
@@ -33,7 +34,12 @@ Lo que falta para terminar y poner en producción la API. Al cerrar un punto, m�
 - [ ] Enviar todos los tipos de email a Gmail y Outlook: que lleguen a la bandeja de entrada (no a spam), que se vean bien en el móvil y que los enlaces apunten a producción (F06 5.3).
 - [ ] Aviso de nuevas fechas: con Resend configurado, comprobar que en Gmail aparece el botón nativo "Cancelar suscripción" y que da de baja (F11 5.1).
 
+- [ ] **Backoffice (F09):** en un móvil real, confirmar un pago desde que llega el WhatsApp en menos de 30 s; comprobar en DevTools que el access token no aparece en Application → Storage; probar la descarga de CSV en iOS Safari.
+- [ ] **Backoffice (F09):** el refresh de la sesión cuenta para el rate limit `auth` (10 cada 5 min por IP). Recargar la página muchas veces seguidas da 429 ("Demasiados intentos"); si molesta a la clienta, subir `RateLimit__Auth__PermitLimit` o separar una política para `/api/auth/refresh`.
+
 ## 4. Con la clienta
+
+- [ ] **Probar el backoffice (F09)** en una sesión guiada de 20 minutos antes de la entrega: confirmar un pago, ampliar plazo, crear y editar una fecha, lista de espera.
 
 - [ ] **Revisar los emails.** Los textos, el color (`#b5838d`) y el logo (`{App__BaseUrl}/email/logo.png`) son provisionales (F06 5.1):
   - Puede verlos con `GET /api/admin/emails/preview/{tipo}` (solo SuperAdmin); con `?formato=texto` sale la versión de texto.
