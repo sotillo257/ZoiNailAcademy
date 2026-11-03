@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Check for pending EF Core model changes
+        run: |
+          dotnet tool install --global dotnet-ef --version "10.*"
+          dotnet ef migrations has-pending-model-changes --project src/ZoiNailAcademy.Infrastructure --no-build --configuration Release
+
+      - name: Unit tests
+        run: dotnet test tests/UnitTests --no-build --configuration Release
+
+      # ubuntu-latest runners ship with Docker, which Testcontainers uses to start PostgreSQL.
+      - name: Integration tests
+        run: dotnet test tests/IntegrationTests --no-build --configuration Release
+
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t zoinailacademy-backend:ci .

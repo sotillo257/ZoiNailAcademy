@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+tests/
+openspec/
+docs/
+.git/
+.github/
+.gitignore
+.vs/
+.vscode/
+*.md
