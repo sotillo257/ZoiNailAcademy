@@ -127,6 +127,81 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                     b.ToTable("Ediciones", (string)null);
                 });
 
+            modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.EmailSaliente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("EnviadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Html")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Para")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ProveedorId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("ProximoIntentoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReferenciaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReplyTo")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UltimoError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado", "ProximoIntentoEn");
+
+                    b.HasIndex("Tipo", "ReferenciaId")
+                        .IsUnique()
+                        .HasFilter("\"ReferenciaId\" IS NOT NULL");
+
+                    b.ToTable("EmailsSalientes", (string)null);
+                });
+
             modelBuilder.Entity("ZoiNailAcademy.Domain.Entities.ListaEspera", b =>
                 {
                     b.Property<Guid>("Id")

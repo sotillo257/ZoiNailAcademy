@@ -9,4 +9,10 @@ public class AppOptions
     public string BaseUrl { get; set; } = string.Empty;
 
     public string TimeZone { get; set; } = "Europe/Madrid";
+
+    /// <summary>Shown in the emails (sender name, footer).</summary>
+    public string NombreAcademia { get; set; } = "Zoi Nail Academy";
+
+    /// <summary>Postal address in the footer of the emails (optional).</summary>
+    public string DireccionAcademia { get; set; } = string.Empty;
 }

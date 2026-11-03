@@ -16,6 +16,7 @@ using ZoiNailAcademy.Infrastructure;
 using ZoiNailAcademy.Infrastructure.Authentication;
 using ZoiNailAcademy.Infrastructure.Data;
 using ZoiNailAcademy.Infrastructure.Data.Seeding;
+using ZoiNailAcademy.Infrastructure.Email;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +37,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<ExpirarReservasJob>();
+builder.Services.AddHostedService<EnviarEmailsJob>();
 
 builder.Services.Configure<AuthCookieOptions>(builder.Configuration.GetSection(AuthCookieOptions.SectionName));
 builder.Services.AddSingleton<RefreshTokenCookie>();
@@ -132,6 +134,11 @@ using (var scope = app.Services.CreateScope())
     await seeder.SeedAsync(app.Environment.IsProduction());
 
     await scope.ServiceProvider.GetRequiredService<CursoSeeder>().SeedAsync();
+}
+
+if (app.Services.GetRequiredService<EmailProveedorSeleccion>().Aviso is { } avisoEmail)
+{
+    app.Logger.LogWarning("{AvisoEmail}", avisoEmail);
 }
 
 if (forwardedHeadersSettings.TrustsAnyProxy)

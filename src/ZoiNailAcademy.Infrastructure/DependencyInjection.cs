@@ -2,6 +2,8 @@ using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Infrastructure.Authentication;
 using ZoiNailAcademy.Infrastructure.Data;
 using ZoiNailAcademy.Infrastructure.Data.Seeding;
+using ZoiNailAcademy.Infrastructure.Email;
+using Microsoft.Extensions.Options;
 using ZoiNailAcademy.Infrastructure.Settings;
 using ZoiNailAcademy.Infrastructure.Stripe;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +41,23 @@ public static class DependencyInjection
         services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
         services.AddSingleton<IStripeGateway, StripeGateway>();
         services.AddSingleton<IStripeWebhookParser, StripeWebhookParser>();
+
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.Configure<ResendOptions>(configuration.GetSection(ResendOptions.SectionName));
+        services.AddSingleton<IEmailSettings, EmailSettings>();
+        var proveedorEmail = EmailProveedorSeleccion.Desde(configuration);
+        services.AddSingleton(proveedorEmail);
+        if (proveedorEmail.Proveedor == EmailProviders.Resend)
+        {
+            services.AddSingleton<IEmailSender>(sp => new ResendEmailSender(
+                new HttpClient { BaseAddress = ResendEmailSender.BaseAddress, Timeout = TimeSpan.FromSeconds(30) },
+                sp.GetRequiredService<IOptions<EmailOptions>>(),
+                sp.GetRequiredService<IOptions<ResendOptions>>()));
+        }
+        else
+        {
+            services.AddSingleton<IEmailSender, LogEmailSender>();
+        }
 
         services.AddSingleton<IAuthTokenSettings, AuthTokenSettings>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();

@@ -96,6 +96,26 @@ Las acciones responden `{reserva, avisos}` y exigen el `version` leído (409 `co
 
 El mismo email en el mismo curso actualiza el registro (vuelve a "no contactado") y responde igual que un alta nueva. El texto de consentimiento que se guarda es la constante versionada del backend (`ConsentimientoListaEspera.V1`, también cubre el aviso por email de nuevas fechas de F11), no el que envía el front. `q` busca en nombre, email y teléfono sin distinguir mayúsculas ni acentos (`Jose` encuentra `José`). El CSV antepone `'` a los campos que empiezan por `=`, `+`, `-` o `@` para que Excel no los ejecute como fórmulas (por eso el teléfono sale como `'+34…`).
 
+### Emails y contacto (F06)
+
+| Método | Ruta | Auth | Descripción |
+| --- | --- | --- | --- |
+| POST | `/api/contacto` | No (rate limit `formularios`) | `{nombre, email, telefono?, mensaje, aceptaPrivacidad, website}` → 202; email a la clienta con `Reply-To` del remitente |
+| GET | `/api/admin/emails/preview/{tipo}` | SuperAdmin | HTML del email con datos de ejemplo (`?formato=texto` para la versión de texto) |
+
+Los eventos de dominio encolan los emails en `EmailsSalientes` (una sola vez por tipo y reserva aunque el evento se repita) y `EnviarEmailsJob` los envía cada 30 s, con reintentos a 1 min, 5 min, 15 min y 1 h, y `Fallido` tras 5 intentos. Un fallo de email nunca rompe una reserva ni un webhook. Los enviados se borran a los 90 días.
+
+| Tipo | Cuándo | Para |
+| --- | --- | --- |
+| `ReservaPagada.Comprador` / `.Clienta` | Pago con tarjeta o transferencia confirmada | Comprador / clienta |
+| `ReservaManual.Comprador` / `.Clienta` | Reserva por transferencia o Bizum | Comprador (datos de pago y WhatsApp) / clienta |
+| `ReservaExpirada.Comprador` | Caduca una reserva **manual** (las de tarjeta no avisan) | Comprador |
+| `PagoSinPlaza.Clienta` | Pago tras caducidad sin plaza | Clienta |
+| `ListaEspera.Clienta` | Alta o re-alta en la lista de espera | Clienta |
+| `Contacto.Clienta` / `Contacto.Acuse` | Formulario de contacto (acuse solo con `Email__AcuseContacto=true`) | Clienta / remitente |
+
+**Sin cuenta de Resend:** si falta `Resend__ApiKey` o `Email__From`, la API arranca igual, lo avisa en el log al arrancar y los emails solo se escriben en el log (quedan como enviados con `ProveedorId = log`). Si falta `Email__AvisosClienta`, los avisos a la clienta no se encolan. En `Development` el proveedor es `Log` y cada email se guarda también en `emails-dev/*.html` para verlo en el navegador. Los textos, colores y el logo (`{App__BaseUrl}/email/logo.png`) son provisionales hasta revisarlos con la clienta en el preview.
+
 `/api/auth/register` no existe. Los controllers de `/api/admin/**` llevan `[Authorize(Policy = AuthorizationPolicies.Backoffice)]` a nivel de clase (y `SuperAdmin` en las acciones del desarrollador); un test de integración recorre esas rutas dinámicamente y falla si alguna queda abierta.
 
 ## Configuración
@@ -126,6 +146,14 @@ Lista completa con ejemplos en [`.env.example`](.env.example). Toda variable nue
 | `Pago__Titular`, `Pago__Iban`, `Pago__BizumTelefono` | Datos de pago que ve el comprador |
 | `Pago__WhatsAppTelefono` | WhatsApp para el comprobante, internacional sin `+` (`34612345678`) |
 | `Stripe__SecretKey`, `Stripe__WebhookSecret` | **Secretos** de Stripe (`sk_…` y `whsec_…` del endpoint del webhook) |
+| `App__NombreAcademia`, `App__DireccionAcademia` | Nombre y dirección del pie de los emails |
+| `Email__Provider` | `Resend` (por defecto) o `Log`; sin `Resend__ApiKey` o `Email__From` se usa `Log` |
+| `Resend__ApiKey` | **Secreto** de Resend (`re_…`) |
+| `Email__From` | Remitente con dominio verificado en Resend (`Zoi Nail Academy <reservas@dominio>`) |
+| `Email__ReplyTo` | Email de la clienta: `Reply-To` de los emails a compradores |
+| `Email__AvisosClienta` | Dónde recibe la clienta los avisos (vacío: no se encolan) |
+| `Email__AcuseContacto` | Acuse de recibo al que usa el formulario de contacto (`false`) |
+| `Email__DirectorioLog` | Solo desarrollo: carpeta donde el proveedor `Log` guarda los `.html` |
 | `Swagger__EnableInProduction` | `true` para exponer Swagger temporalmente en producción |
 
 CORS solo se configura en `Development` (`Cors:AllowedOrigins`): en producción el navegador habla con Next y Next reenvía `/api/*` por la red privada, así que todo es mismo origen.
