@@ -36,6 +36,22 @@
   --ocupacion-pagadas: var(--brand-burgundy);
   --ocupacion-pendientes: #e7a3a1;
   --ocupacion-libres: #efeaea;
+
+  /* Public web (F08), taken from the approved design. */
+  --z-burgundy: #8b0b0a;
+  --z-burgundy-dark: #6e0908;
+  --z-ink: #1a1a1a;
+  --z-text: #555150;
+  --z-muted: #8a8584;
+  --z-cream: #f6f2f1;
+  --z-photo: #e8e0de;
+  --z-line: #ebe5e4;
+  --z-green: #176f3c;
+  --z-green-dark: #115a30;
+  --z-green-soft: #e6f4ea;
+  --z-amber: #8a4b14;
+  --z-amber-soft: #fce6cf;
+  --z-red-soft: #fbe4e4;
 }
 
 @theme inline {
@@ -63,6 +79,21 @@
   --color-ocupacion-pagadas: var(--ocupacion-pagadas);
   --color-ocupacion-pendientes: var(--ocupacion-pendientes);
   --color-ocupacion-libres: var(--ocupacion-libres);
+  --color-z-burgundy: var(--z-burgundy);
+  --color-z-burgundy-dark: var(--z-burgundy-dark);
+  --color-z-ink: var(--z-ink);
+  --color-z-text: var(--z-text);
+  --color-z-muted: var(--z-muted);
+  --color-z-cream: var(--z-cream);
+  --color-z-photo: var(--z-photo);
+  --color-z-line: var(--z-line);
+  --color-z-green: var(--z-green);
+  --color-z-green-dark: var(--z-green-dark);
+  --color-z-green-soft: var(--z-green-soft);
+  --color-z-amber: var(--z-amber);
+  --color-z-amber-soft: var(--z-amber-soft);
+  --color-z-red-soft: var(--z-red-soft);
+  --font-montserrat: var(--font-montserrat-var), ui-sans-serif, system-ui, sans-serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -94,3 +125,8 @@
 .prosa a { color: var(--primary); text-decoration: underline; }
 .prosa strong { font-weight: 600; }
 .prosa blockquote { border-left: 3px solid var(--border); padding-left: 0.75em; color: var(--muted-foreground); }
+
+/* Public web: long legal texts */
+.legal h2 { font-size: 1.25rem; font-weight: 700; color: var(--z-ink); margin-top: 2rem; }
+.legal p, .legal li { color: var(--z-text); line-height: 1.7; margin-top: 0.75rem; }
+.legal ul { list-style: disc; padding-left: 1.25rem; }
