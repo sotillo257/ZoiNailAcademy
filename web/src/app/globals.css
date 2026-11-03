@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/*
+ * Brand colours taken from zoinailartist.online: deep burgundy (#820101 / #7f1d1d), bright red (#fc3d39) and
+ * dusty rose (#995151). The backoffice is sober: neutral surfaces, burgundy for actions, red only to call attention.
+ * #fc3d39 on white does not reach AA for text, so it is used for fills/badges with white bold text or as an accent.
+ */
+:root {
+  --brand-burgundy: #820101;
+  --brand-burgundy-dark: #5c0101;
+  --brand-red: #fc3d39;
+  --brand-rose: #995151;
+  --brand-rose-soft: #f7eded;
+
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --muted: #f6f4f4;
+  --muted-foreground: #5b6170;
+  --border: #e6e1e1;
+  --input: #d9d2d2;
+  --ring: #fc3d39;
+  --primary: var(--brand-burgundy);
+  --primary-hover: var(--brand-burgundy-dark);
+  --primary-foreground: #ffffff;
+  --secondary: var(--brand-rose-soft);
+  --secondary-foreground: #6b2f2f;
+  --accent: var(--brand-red);
+  --destructive: #b91c1c;
+  --destructive-soft: #fef2f2;
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  /* Occupancy bar */
+  --ocupacion-pagadas: var(--brand-burgundy);
+  --ocupacion-pendientes: #e7a3a1;
+  --ocupacion-libres: #efeaea;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-rose: var(--brand-rose);
+  --color-ocupacion-pagadas: var(--ocupacion-pagadas);
+  --color-ocupacion-pendientes: var(--ocupacion-pendientes);
+  --color-ocupacion-libres: var(--ocupacion-libres);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Markdown preview of the course description */
+.prosa > * + * { margin-top: 0.75em; }
+.prosa h1 { font-size: 1.5em; font-weight: 600; }
+.prosa h2 { font-size: 1.25em; font-weight: 600; }
+.prosa h3 { font-size: 1.1em; font-weight: 600; }
+.prosa ul { list-style: disc; padding-left: 1.25em; }
+.prosa ol { list-style: decimal; padding-left: 1.25em; }
+.prosa a { color: var(--primary); text-decoration: underline; }
+.prosa strong { font-weight: 600; }
+.prosa blockquote { border-left: 3px solid var(--border); padding-left: 0.75em; color: var(--muted-foreground); }

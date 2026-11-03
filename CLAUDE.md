@@ -56,6 +56,8 @@ Time: never call `DateTime.UtcNow`/`DateTimeOffset.UtcNow`; inject `TimeProvider
 
 Swagger UI and the OpenAPI document are mapped in Development, and can also be enabled temporarily in Production via the `Swagger__EnableInProduction=true` environment variable — unset (or `false`) by default, so `/swagger` and `/openapi/v1.json` stay unmapped and return `401` like any other unmatched route. When enabled, both endpoints bypass the global authentication fallback policy.
 
+Front (F09): `web/` is the Next.js 16 app (App Router, TypeScript strict, Tailwind 4, shadcn-style components in `web/src/components/ui`); today it holds only the backoffice under `/admin`, and F08 adds the public site to the same project. The browser only calls relative `/api/*`, rewritten to `API_INTERNAL_URL`. Backoffice auth lives in `web/src/lib/admin/session.ts`: access token only in memory, single-flight refresh on 401 (serialized across tabs with a Web Lock, because the API revokes every session when a rotated refresh token is replayed), proactive refresh a minute before expiry, logout broadcast on `BroadcastChannel('auth')`. Dates are typed and shown in Madrid through `web/src/lib/fechas.ts` (`madridAIso`/`isoAMadrid`). DTO types are hand-written in `web/src/lib/admin/types.ts`; `npm run api:types` generates the Swagger ones to compare. Commands: `cd web && npm run typecheck && npm test && npm run build`; `npm run e2e` runs Playwright (phone and desktop) against a running API in Development plus `npm start`.
+
 ## Code conventions
 
 - Controllers, not Minimal APIs.
