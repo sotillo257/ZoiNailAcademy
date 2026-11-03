@@ -120,12 +120,14 @@ public class CaducidadReservasTests(CustomWebApplicationFactory factory) : Reser
                 content: JsonContent.Create(new { version = reserva.Version.ToString() }), accessToken: token, client: client));
         }
 
-        await Task.WhenAll(EjecutarJobAsync(host), Task.WhenAll(confirmaciones));
+        var job = EjecutarJobAsync(host);
+        var respuestas = await Task.WhenAll(confirmaciones);
+        await job;
 
         for (var i = 0; i < codigos.Count; i++)
         {
             var reserva = (await BuscarReservaAsync(codigos[i]))!;
-            var respuesta = confirmaciones[i].Result;
+            var respuesta = respuestas[i];
             var pagadas = EventRecorder.Count<ReservaPagadaEvent>(e => e.ReservaId == reserva.Id);
             var expiradas = EventRecorder.Count<ReservaExpiradaEvent>(e => e.ReservaId == reserva.Id);
 
