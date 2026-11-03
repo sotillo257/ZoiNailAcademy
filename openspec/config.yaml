@@ -2,10 +2,15 @@ schema: spec-driven
 
 # Project context shown to AI when creating artifacts.
 context: |
-  Project: ZoiNailAcademy backend — REST API (TODO: describe the product).
-  Multi-user with JWT authentication and per-user data isolation. PRD and API
-  contracts live in docs/ (TODO: add them). `Notes` is an example feature that
-  demonstrates the full pattern and should be removed once real features exist.
+  Project: Zoi Nail Academy API — backend of a course-selling website (4
+  courses with dated editions and limited seats; bookings paid with Stripe
+  Checkout or bank transfer/Bizum confirmed by hand; waiting list; backoffice).
+  Closed backoffice: users Admin (client) and SuperAdmin (developer) seeded from
+  environment variables, no registration. Product docs in Docs/: PRD.md,
+  00-contrato-y-convenciones.md (API contract: routes, DTOs, business error
+  codes, domain events — it wins over feature specs) and features/Fxx-*.md.
+  All routes under /api (global convention); backoffice under /api/admin with
+  the Backoffice/SuperAdmin policies; refresh token in an HttpOnly cookie.
 
   Tech stack (CURRENT STATE — what actually exists in the repo today):
   - .NET 10 / ASP.NET Core with Controllers, single host (ZoiNailAcademy.Host)
@@ -16,8 +21,8 @@ context: |
     design-time factory; enums persisted as text; audit timestamps handled in
     SaveChanges
   - Authentication: JWT access tokens + rotated, SHA-256-hashed refresh tokens,
-    BCrypt password hashing, global Bearer fallback policy, per-IP rate
-    limiting on /auth/*
+    BCrypt password hashing, global Bearer fallback policy, roles Admin and
+    SuperAdmin, reuse detection on refresh tokens
   - Domain entities: private setters, instantiation only through static
     Create(...) factory methods that enforce invariants, inheriting from
     BaseAuditableEntity
@@ -25,13 +30,17 @@ context: |
   - Testing: xUnit + FluentAssertions + Moq (unit), WebApplicationFactory +
     Testcontainers.PostgreSql (integration, requires Docker)
   - Deployment: Railway with a multi-stage Dockerfile; configuration via
-    environment variables (DATABASE_URL, PORT); GET /health unauthenticated
+    environment variables (DATABASE_URL, PORT); GET /api/health unauthenticated;
+    API reached only through the Next.js /api rewrite over Railway's private
+    network (ForwardedHeaders for the real client IP)
+  - Clock: inject TimeProvider (never DateTime.UtcNow); DateTimeOffset (UTC)
+  - Named per-IP rate-limit policies: auth, reservas, formularios
 
   Application layer convention for new use cases:
   - Organize by feature, then by operation:
       Application/
-        <Feature>/                e.g. Notes
-          <Operation>/            e.g. CreateNote, UpdateNote
+        <Feature>/                e.g. Authentication, Ediciones
+          <Operation>/            e.g. Login, CrearEdicion
   - Each <Operation> folder contains everything for that use case: the
     command/query record, its handler, and its validator when applicable
   - Do not create loose handlers outside a feature/operation folder
@@ -58,7 +67,7 @@ rules:
     - Design for testability — behavior must be reachable through public interfaces (HTTP endpoints, handlers) without inspecting internals
     - Respect inward-only dependency rules — call out any new ProjectReference explicitly
     - Justify any new NuGet dependency; default to the existing minimal stack
-    - Include request/response schemas for all endpoints, with error codes and ProblemDetails format, consistent with the API contracts in docs/
+    - Include request/response schemas for all endpoints, with error codes and ProblemDetails format, consistent with the API contract in Docs/00-contrato-y-convenciones.md
     - Include a Risks/Trade-offs section
 
   specs:

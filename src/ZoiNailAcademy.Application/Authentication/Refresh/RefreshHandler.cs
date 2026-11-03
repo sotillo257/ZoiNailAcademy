@@ -1,7 +1,6 @@
 using ZoiNailAcademy.Application.Common;
 using ZoiNailAcademy.Application.Common.Exceptions;
 using ZoiNailAcademy.Application.Common.Interfaces;
-using ZoiNailAcademy.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,45 +8,74 @@ namespace ZoiNailAcademy.Application.Authentication.Refresh;
 
 public class RefreshHandler(
     IAppDbContext dbContext,
-    IJwtTokenGenerator jwtTokenGenerator,
-    IRefreshTokenHasher refreshTokenHasher)
-    : IRequestHandler<RefreshCommand, Result<TokenPairResponse>>
+    IRefreshTokenHasher refreshTokenHasher,
+    AuthTokenIssuer tokenIssuer,
+    TimeProvider timeProvider)
+    : IRequestHandler<RefreshCommand, Result<AuthResult>>
 {
-    private const string InvalidTokenMessage = "El refresh token no es válido o ha expirado.";
-    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(30);
+    public const string InvalidTokenMessage = "La sesión no es válida o ha expirado.";
 
-    public async Task<Result<TokenPairResponse>> Handle(RefreshCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResult>> Handle(RefreshCommand request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(request.RefreshToken))
+        {
+            throw new UnauthorizedException(InvalidTokenMessage);
+        }
+
+        var now = timeProvider.GetUtcNow();
         var presentedHash = refreshTokenHasher.Hash(request.RefreshToken);
 
         var existingToken = await dbContext.RefreshTokens
             .FirstOrDefaultAsync(t => t.TokenHash == presentedHash, cancellationToken);
 
-        if (existingToken is null || !existingToken.IsActive)
+        if (existingToken is null)
+        {
+            throw new UnauthorizedException(InvalidTokenMessage);
+        }
+
+        if (existingToken.WasRotated)
+        {
+            // A rotated token is being replayed: either the client or an attacker holds a stolen
+            // copy. We cannot tell which, so every session of the user is closed.
+            await RevokeAllActiveTokensAsync(existingToken.UserId, now, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            throw new UnauthorizedException(InvalidTokenMessage);
+        }
+
+        if (!existingToken.IsActiveAt(now))
         {
             throw new UnauthorizedException(InvalidTokenMessage);
         }
 
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == existingToken.UserId, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Id == existingToken.UserId, cancellationToken)
+            ?? throw new UnauthorizedException(InvalidTokenMessage);
 
-        if (user is null)
+        var (result, newTokenHash) = tokenIssuer.Issue(user);
+        existingToken.Revoke(now, newTokenHash);
+
+        try
         {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another request rotated the same token at the same time (xmin changed): only one wins.
             throw new UnauthorizedException(InvalidTokenMessage);
         }
 
-        var rawNewRefreshToken = refreshTokenHasher.GenerateRawToken();
-        var newTokenHash = refreshTokenHasher.Hash(rawNewRefreshToken);
+        return Result.Success(result);
+    }
 
-        existingToken.Revoke(newTokenHash);
+    private async Task RevokeAllActiveTokensAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var activeTokens = await dbContext.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ToListAsync(cancellationToken);
 
-        var newRefreshToken = RefreshToken.Create(user.Id, newTokenHash, DateTime.UtcNow.Add(RefreshTokenLifetime));
-        dbContext.RefreshTokens.Add(newRefreshToken);
-
-        var accessToken = jwtTokenGenerator.Generate(user);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(new TokenPairResponse(accessToken, rawNewRefreshToken));
+        foreach (var token in activeTokens)
+        {
+            token.Revoke(now);
+        }
     }
 }

@@ -7,17 +7,19 @@ namespace ZoiNailAcademy.Infrastructure.Data;
 
 public class AppDbContext : DbContext, IAppDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    private readonly TimeProvider _timeProvider;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, TimeProvider timeProvider) : base(options)
     {
+        _timeProvider = timeProvider;
     }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<Note> Notes => Set<Note>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
+        var now = _timeProvider.GetUtcNow();
 
         foreach (var entry in ChangeTracker.Entries<BaseAuditableEntity>())
         {

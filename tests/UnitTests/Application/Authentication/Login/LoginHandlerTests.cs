@@ -1,108 +1,86 @@
 using FluentAssertions;
+using Moq;
+using UnitTests.TestSupport;
 using ZoiNailAcademy.Application.Authentication.Login;
 using ZoiNailAcademy.Application.Common.Exceptions;
-using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Domain.Entities;
-using MockQueryable.Moq;
-using Moq;
+using ZoiNailAcademy.Domain.Enums;
 
 namespace UnitTests.Application.Authentication.Login;
 
 public class LoginHandlerTests
 {
-    private const string GenericErrorMessage = "Email o contraseña incorrectos.";
-
-    private readonly Mock<IAppDbContext> _dbContext = new();
-    private readonly Mock<IPasswordHasher> _passwordHasher = new();
-    private readonly Mock<IJwtTokenGenerator> _jwtTokenGenerator = new();
-    private readonly Mock<IRefreshTokenHasher> _refreshTokenHasher = new();
+    private readonly AuthTestContext _ctx = new();
     private readonly LoginHandler _handler;
 
     public LoginHandlerTests()
     {
-        _handler = new LoginHandler(
-            _dbContext.Object,
-            _passwordHasher.Object,
-            _jwtTokenGenerator.Object,
-            _refreshTokenHasher.Object);
+        _handler = new LoginHandler(_ctx.DbContext.Object, _ctx.PasswordHasher.Object, _ctx.CreateIssuer());
     }
 
-    private void SetupUsers(params User[] existingUsers)
+    private User SetupValidUser()
     {
-        var mockSet = existingUsers.ToList().BuildMockDbSet();
-        _dbContext.Setup(x => x.Users).Returns(mockSet.Object);
-    }
-
-    private void SetupRefreshTokens()
-    {
-        var mockSet = new List<RefreshToken>().BuildMockDbSet();
-        _dbContext.Setup(x => x.RefreshTokens).Returns(mockSet.Object);
+        var user = User.Create("clienta@mail.com", "Clienta", "stored-hash", UserRole.Admin);
+        _ctx.SetupUsers(user);
+        _ctx.PasswordHasher.Setup(x => x.Verify("password123", "stored-hash")).Returns(true);
+        _ctx.JwtTokenGenerator.Setup(x => x.Generate(user)).Returns("access-token");
+        _ctx.RefreshTokenHasher.Setup(x => x.GenerateRawToken()).Returns("raw-refresh-token");
+        return user;
     }
 
     [Fact]
-    public async Task Handle_WithCorrectCredentials_ReturnsTokensAndUser()
+    public async Task Handle_WithCorrectCredentials_ReturnsTokensUserAndRole()
     {
-        var user = User.Create("jesus@mail.com", "Jesús", "stored-hash");
-        SetupUsers(user);
-        SetupRefreshTokens();
-        _passwordHasher.Setup(x => x.Verify("password123", "stored-hash")).Returns(true);
-        _jwtTokenGenerator.Setup(x => x.Generate(user)).Returns("access-token");
-        _refreshTokenHasher.Setup(x => x.GenerateRawToken()).Returns("raw-refresh-token");
-        _refreshTokenHasher.Setup(x => x.Hash("raw-refresh-token")).Returns("hashed-refresh-token");
+        var user = SetupValidUser();
 
-        var command = new LoginCommand("Jesus@Mail.com", "password123");
-
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(new LoginCommand("Clienta@Mail.com", "password123"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.AccessToken.Should().Be("access-token");
+        result.Value.ExpiresIn.Should().Be(15 * 60);
         result.Value.RefreshToken.Should().Be("raw-refresh-token");
-        result.Value.User.Email.Should().Be("jesus@mail.com");
-        _dbContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        result.Value.RefreshTokenExpiresAt.Should().Be(AuthTestContext.Now.AddDays(14));
+        result.Value.User.Should().BeEquivalentTo(new { user.Id, Email = "clienta@mail.com", Nombre = "Clienta", Rol = UserRole.Admin });
+        _ctx.DbContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WithCorrectCredentials_PersistsOnlyTheHashOfTheRefreshToken()
+    {
+        var user = SetupValidUser();
+
+        await _handler.Handle(new LoginCommand("clienta@mail.com", "password123"), CancellationToken.None);
+
+        _ctx.RefreshTokens.Should().ContainSingle()
+            .Which.Should().Match<RefreshToken>(t =>
+                t.UserId == user.Id && t.TokenHash == "hash:raw-refresh-token" && t.ExpiresAt == AuthTestContext.Now.AddDays(14));
     }
 
     [Fact]
     public async Task Handle_WithUnknownEmail_ThrowsGenericUnauthorizedException()
     {
-        SetupUsers();
-        SetupRefreshTokens();
+        var act = async () => await _handler.Handle(new LoginCommand("unknown@mail.com", "password123"), CancellationToken.None);
 
-        var command = new LoginCommand("unknown@mail.com", "password123");
-
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
-
-        (await act.Should().ThrowAsync<UnauthorizedException>()).WithMessage(GenericErrorMessage);
+        (await act.Should().ThrowAsync<UnauthorizedException>()).WithMessage(LoginHandler.GenericErrorMessage);
     }
 
     [Fact]
     public async Task Handle_WithWrongPassword_ThrowsGenericUnauthorizedException()
     {
-        var user = User.Create("jesus@mail.com", "Jesús", "stored-hash");
-        SetupUsers(user);
-        SetupRefreshTokens();
-        _passwordHasher.Setup(x => x.Verify("wrong-password", "stored-hash")).Returns(false);
+        SetupValidUser();
 
-        var command = new LoginCommand("jesus@mail.com", "wrong-password");
+        var act = async () => await _handler.Handle(new LoginCommand("clienta@mail.com", "wrong-password"), CancellationToken.None);
 
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
-
-        (await act.Should().ThrowAsync<UnauthorizedException>()).WithMessage(GenericErrorMessage);
+        (await act.Should().ThrowAsync<UnauthorizedException>()).WithMessage(LoginHandler.GenericErrorMessage);
+        _ctx.RefreshTokens.Should().BeEmpty();
     }
 
     [Fact]
     public async Task Handle_NormalizesEmail_BeforeLookup()
     {
-        var user = User.Create("jesus@mail.com", "Jesús", "stored-hash");
-        SetupUsers(user);
-        SetupRefreshTokens();
-        _passwordHasher.Setup(x => x.Verify("password123", "stored-hash")).Returns(true);
-        _jwtTokenGenerator.Setup(x => x.Generate(user)).Returns("access-token");
-        _refreshTokenHasher.Setup(x => x.GenerateRawToken()).Returns("raw-refresh-token");
-        _refreshTokenHasher.Setup(x => x.Hash("raw-refresh-token")).Returns("hashed-refresh-token");
+        SetupValidUser();
 
-        var command = new LoginCommand("  JESUS@MAIL.COM  ", "password123");
-
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(new LoginCommand("  CLIENTA@MAIL.COM  ", "password123"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
     }

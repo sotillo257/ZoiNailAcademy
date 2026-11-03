@@ -1,29 +1,34 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using ZoiNailAcademy.Host.RateLimiting;
 
 namespace IntegrationTests.TestSupport;
 
 /// <summary>
-/// Adds a throwaway endpoint with no [Authorize]/[AllowAnonymous] metadata, so integration
-/// tests can verify the global FallbackPolicy independently of any business endpoint.
+/// Adds throwaway endpoints for the tests: one with no [Authorize]/[AllowAnonymous] metadata (to
+/// verify the global FallbackPolicy) and one anonymous endpoint per named rate-limit policy.
 /// </summary>
 public class ProtectedTestEndpointStartupFilter : IStartupFilter
 {
+    public static readonly string[] RateLimitPolicyNames =
+        [RateLimitPolicies.Auth, RateLimitPolicies.Reservas, RateLimitPolicies.Formularios];
+
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
     {
         next(app);
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapGet("/__test/protected", (HttpContext context) =>
-            {
-                var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                    ?? context.User.FindFirst("sub")?.Value;
+            endpoints.MapGet("/api/__test/protected", (HttpContext context) =>
+                Results.Ok(new { userId = context.User.FindFirst("sub")?.Value }));
 
-                return Results.Ok(new { userId });
-            });
+            foreach (var policy in RateLimitPolicyNames)
+            {
+                endpoints.MapGet($"/api/__test/rate/{policy}", () => Results.Ok())
+                    .RequireRateLimiting(policy)
+                    .AllowAnonymous();
+            }
         });
     };
 }

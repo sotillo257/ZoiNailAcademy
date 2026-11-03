@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using FluentAssertions;
-using ZoiNailAcademy.Domain.Entities;
-using ZoiNailAcademy.Infrastructure.Authentication;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
+using ZoiNailAcademy.Domain.Entities;
+using ZoiNailAcademy.Domain.Enums;
+using ZoiNailAcademy.Infrastructure.Authentication;
 
 namespace IntegrationTests.Authentication;
 
@@ -16,28 +18,30 @@ public class JwtTokenGeneratorTests
         AccessTokenMinutes = 15
     };
 
-    [Fact]
-    public void Generate_IssuesTokenWithUserIdAsSubjectClaim()
-    {
-        var generator = new JwtTokenGenerator(Options.Create(_options));
-        var user = User.Create("jesus@mail.com", "Jesús", "hash");
+    private readonly FakeTimeProvider _clock = new(new DateTimeOffset(2030, 1, 1, 12, 0, 0, TimeSpan.Zero));
 
-        var token = generator.Generate(user);
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+    [Theory]
+    [InlineData(UserRole.Admin)]
+    [InlineData(UserRole.SuperAdmin)]
+    public void Generate_IssuesTokenWithSubjectAndRoleClaims(UserRole role)
+    {
+        var generator = new JwtTokenGenerator(Options.Create(_options), _clock);
+        var user = User.Create("clienta@mail.com", "Clienta", "hash", role);
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(generator.Generate(user));
 
         jwt.Subject.Should().Be(user.Id.ToString());
+        jwt.Claims.Should().ContainSingle(c => c.Type == "role").Which.Value.Should().Be(role.ToString());
     }
 
     [Fact]
-    public void Generate_IssuesTokenExpiringInApproximately15Minutes()
+    public void Generate_ExpiresAccessTokenMinutesAfterTimeProviderNow()
     {
-        var generator = new JwtTokenGenerator(Options.Create(_options));
-        var user = User.Create("jesus@mail.com", "Jesús", "hash");
+        var generator = new JwtTokenGenerator(Options.Create(_options), _clock);
+        var user = User.Create("clienta@mail.com", "Clienta", "hash", UserRole.Admin);
 
-        var before = DateTime.UtcNow;
-        var token = generator.Generate(user);
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(generator.Generate(user));
 
-        jwt.ValidTo.Should().BeCloseTo(before.AddMinutes(15), TimeSpan.FromMinutes(1));
+        jwt.ValidTo.Should().Be(_clock.GetUtcNow().AddMinutes(15).UtcDateTime);
     }
 }

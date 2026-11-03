@@ -1,43 +1,83 @@
 using System.Net;
 using FluentAssertions;
+using IntegrationTests.TestSupport;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using ZoiNailAcademy.Host.RateLimiting;
 
 namespace IntegrationTests.Controllers;
 
-public class RateLimitingTests : IntegrationTestBase
+public class RateLimitingTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
 {
-    public RateLimitingTests(CustomWebApplicationFactory factory) : base(factory)
-    {
-    }
+    private RateLimitingOptions Options => Factory.Services.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
 
     [Fact]
-    public async Task SixthRequestWithinAMinute_FromSameForwardedIp_Returns429()
+    public async Task Login_RequestNPlusOneFromSameIp_Returns429WithRetryAfter()
     {
         var clientIp = NextTestClientIp();
-        var payload = new { email = $"user-{Guid.NewGuid():N}@mail.com", password = "password123" };
+        var payload = new { email = UniqueEmail(), password = "password-123" };
+        var limit = Options.Auth.PermitLimit;
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < limit; i++)
         {
-            await PostAsJsonFromIpAsync("/auth/login", payload, clientIp);
+            (await PostAsJsonFromIpAsync("/api/auth/login", payload, clientIp))
+                .StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
         }
 
-        var sixthResponse = await PostAsJsonFromIpAsync("/auth/login", payload, clientIp);
+        var rejected = await PostAsJsonFromIpAsync("/api/auth/login", payload, clientIp);
 
-        sixthResponse.StatusCode.Should().Be((HttpStatusCode)429);
-        sixthResponse.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        rejected.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        rejected.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        rejected.Headers.RetryAfter.Should().NotBeNull();
+        rejected.Headers.RetryAfter!.Delta.Should().BePositive().And.BeLessThanOrEqualTo(Options.Auth.Window);
     }
 
     [Fact]
-    public async Task RequestsFromDifferentForwardedIps_AreNotThrottledTogether()
+    public async Task Login_FromDifferentForwardedIps_IsNotThrottledTogether()
     {
-        var payload = new { email = $"user-{Guid.NewGuid():N}@mail.com", password = "password123" };
+        var payload = new { email = UniqueEmail(), password = "password-123" };
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i <= Options.Auth.PermitLimit; i++)
         {
-            await PostAsJsonFromIpAsync("/auth/login", payload, NextTestClientIp());
+            (await PostAsJsonFromIpAsync("/api/auth/login", payload, NextTestClientIp()))
+                .StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
+        }
+    }
+
+    [Fact]
+    public void DefaultLimits_MatchTheSpec()
+    {
+        Options.Auth.PermitLimit.Should().Be(10);
+        Options.Auth.Window.Should().Be(TimeSpan.FromMinutes(5));
+        Options.Reservas.PermitLimit.Should().Be(10);
+        Options.Reservas.Window.Should().Be(TimeSpan.FromMinutes(10));
+        Options.Formularios.PermitLimit.Should().Be(5);
+        Options.Formularios.Window.Should().Be(TimeSpan.FromMinutes(10));
+    }
+
+    [Theory]
+    [InlineData(RateLimitPolicies.Auth)]
+    [InlineData(RateLimitPolicies.Reservas)]
+    [InlineData(RateLimitPolicies.Formularios)]
+    public async Task NamedPolicy_ThrottlesAfterItsPermitLimit(string policy)
+    {
+        var limit = policy switch
+        {
+            RateLimitPolicies.Auth => Options.Auth.PermitLimit,
+            RateLimitPolicies.Reservas => Options.Reservas.PermitLimit,
+            _ => Options.Formularios.PermitLimit
+        };
+        ProtectedTestEndpointStartupFilter.RateLimitPolicyNames.Should().Contain(policy);
+        var clientIp = NextTestClientIp();
+
+        for (var i = 0; i < limit; i++)
+        {
+            (await SendAsync(HttpMethod.Get, $"/api/__test/rate/{policy}", clientIp)).StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        var response = await PostAsJsonFromIpAsync("/auth/login", payload, NextTestClientIp());
+        var rejected = await SendAsync(HttpMethod.Get, $"/api/__test/rate/{policy}", clientIp);
 
-        response.StatusCode.Should().NotBe((HttpStatusCode)429);
+        rejected.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        rejected.Headers.RetryAfter.Should().NotBeNull();
     }
 }

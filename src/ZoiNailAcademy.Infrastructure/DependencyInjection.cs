@@ -1,6 +1,7 @@
 using ZoiNailAcademy.Application.Common.Interfaces;
 using ZoiNailAcademy.Infrastructure.Authentication;
 using ZoiNailAcademy.Infrastructure.Data;
+using ZoiNailAcademy.Infrastructure.Data.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,12 +14,19 @@ public static class DependencyInjection
     {
         var connectionString = GetConnectionString(configuration);
 
+        services.AddSingleton(TimeProvider.System);
+
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<PasswordHasherOptions>(configuration.GetSection(PasswordHasherOptions.SectionName));
 
+        services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
+        services.Configure<SuperAdminSeedOptions>(configuration.GetSection(SuperAdminSeedOptions.SectionName));
+        services.AddScoped<UserSeeder>();
+
+        services.AddSingleton<IAuthTokenSettings, AuthTokenSettings>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<IRefreshTokenHasher, Sha256RefreshTokenHasher>();

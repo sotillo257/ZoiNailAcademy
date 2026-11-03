@@ -4,6 +4,8 @@ using System.Text.Json.Nodes;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 
+using IntegrationTests.TestSupport;
+
 namespace IntegrationTests.Controllers;
 
 public class SwaggerExposureTests : IntegrationTestBase
@@ -12,20 +14,11 @@ public class SwaggerExposureTests : IntegrationTestBase
     {
     }
 
-    private static void UseProductionJwtSettings(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Production");
-        builder.UseSetting("Jwt:SigningKey", "test-only-signing-key-not-for-production-use-1234567890");
-        builder.UseSetting("Jwt:Issuer", "ZoiNailAcademy.Api");
-        builder.UseSetting("Jwt:Audience", "ZoiNailAcademy.Client");
-        builder.UseSetting("Jwt:AccessTokenMinutes", "15");
-    }
-
     [Fact]
     public async Task Swagger_WhenProductionAndFlagUnset_ReturnsUnauthorized()
     {
         using var client = Factory
-            .WithWebHostBuilder(UseProductionJwtSettings)
+            .WithWebHostBuilder(HostSettings.UseProduction)
             .CreateClient();
 
         var openApiResponse = await client.GetAsync("/openapi/v1.json");
@@ -41,7 +34,7 @@ public class SwaggerExposureTests : IntegrationTestBase
         using var client = Factory
             .WithWebHostBuilder(builder =>
             {
-                UseProductionJwtSettings(builder);
+                HostSettings.UseProduction(builder);
                 builder.UseSetting("Swagger:EnableInProduction", "true");
             })
             .CreateClient();
@@ -59,7 +52,7 @@ public class SwaggerExposureTests : IntegrationTestBase
         using var client = Factory
             .WithWebHostBuilder(builder =>
             {
-                UseProductionJwtSettings(builder);
+                HostSettings.UseProduction(builder);
                 builder.UseSetting("Swagger:EnableInProduction", "true");
             })
             .CreateClient();

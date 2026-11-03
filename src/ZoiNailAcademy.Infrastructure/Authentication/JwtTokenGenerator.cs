@@ -8,8 +8,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace ZoiNailAcademy.Infrastructure.Authentication;
 
-public class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerator
+public class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider timeProvider) : IJwtTokenGenerator
 {
+    /// <summary>Claim type carrying the user's role. The Host validates tokens with <c>RoleClaimType = "role"</c>.</summary>
+    public const string RoleClaimType = "role";
+
     public string Generate(User user)
     {
         var jwtOptions = options.Value;
@@ -18,6 +21,7 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerato
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(RoleClaimType, user.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -28,7 +32,7 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerato
             issuer: jwtOptions.Issuer,
             audience: jwtOptions.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(jwtOptions.AccessTokenMinutes),
+            expires: timeProvider.GetUtcNow().AddMinutes(jwtOptions.AccessTokenMinutes).UtcDateTime,
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
