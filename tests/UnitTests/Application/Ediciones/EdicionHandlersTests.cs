@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using UnitTests.TestSupport;
 using ZoiNailAcademy.Application.Common.Exceptions;
@@ -23,7 +24,9 @@ public class CrearEdicionHandlerTests
     public CrearEdicionHandlerTests()
     {
         _ctx.SetupCursos(_curso);
-        _handler = new CrearEdicionHandler(_ctx.DbContext.Object, _ctx.Publisher.Object, _ctx.Settings.Object, _ctx.TimeProvider);
+        _handler = new CrearEdicionHandler(
+            _ctx.DbContext.Object, _ctx.Publisher.Object, _ctx.Settings.Object, _ctx.TimeProvider,
+            NullLogger<CrearEdicionHandler>.Instance);
     }
 
     [Fact]
@@ -71,7 +74,8 @@ public class EditarEdicionHandlerTests
     public EditarEdicionHandlerTests()
     {
         _handler = new EditarEdicionHandler(
-            _ctx.DbContext.Object, _ctx.OcupacionReader.Object, _ctx.Publisher.Object, _ctx.Settings.Object, _ctx.TimeProvider);
+            _ctx.DbContext.Object, _ctx.OcupacionReader.Object, _ctx.Publisher.Object, _ctx.Settings.Object, _ctx.TimeProvider,
+            NullLogger<EditarEdicionHandler>.Instance);
     }
 
     private static EditarEdicionCommand Command(Edicion e, EstadoEdicion? estado = null, int? plazas = null, string version = "0") =>

@@ -44,6 +44,12 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
                 HttpStatusCode.Conflict,
                 CreateProblemDetails(HttpStatusCode.Conflict, businessEx.Message, businessEx.Code, businessEx.Extensions)),
 
+            TooManyRequestsException tooManyEx => (
+                HttpStatusCode.TooManyRequests,
+                CreateProblemDetails(HttpStatusCode.TooManyRequests, tooManyEx.Message, tooManyEx.Code)),
+
+            PaymentProviderException paymentEx => LogAndCreateBadGateway(paymentEx),
+
             UnauthorizedException unauthorizedEx => (
                 HttpStatusCode.Unauthorized,
                 CreateProblemDetails(HttpStatusCode.Unauthorized, unauthorizedEx.Message)),
@@ -95,6 +101,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         }
 
         return problemDetails;
+    }
+
+    // The provider's message may contain internal details: log it, show a generic Spanish message.
+    private (HttpStatusCode, ProblemDetails) LogAndCreateBadGateway(PaymentProviderException exception)
+    {
+        logger.LogError(exception, "Fallo del proveedor de pagos");
+        return (HttpStatusCode.BadGateway, CreateProblemDetails(HttpStatusCode.BadGateway, PaymentProviderException.MensajePublico));
     }
 
     private (HttpStatusCode, ProblemDetails) LogAndCreateInternalError(Exception exception)

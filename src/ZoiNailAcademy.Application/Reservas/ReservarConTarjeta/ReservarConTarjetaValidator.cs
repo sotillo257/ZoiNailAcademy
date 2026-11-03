@@ -1,0 +1,3 @@
+namespace ZoiNailAcademy.Application.Reservas.ReservarConTarjeta;
+
+public class ReservarConTarjetaValidator : ReservaFormularioValidator<ReservarConTarjetaCommand>;

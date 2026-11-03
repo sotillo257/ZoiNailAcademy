@@ -37,13 +37,13 @@ public class CursosPublicosTests(CustomWebApplicationFactory factory) : Catalogo
         var conPlazas = await CrearCursoEnBdAsync();
         var completa = await CrearEdicionEnBdAsync(conPlazas, Now.AddDays(10), plazas: 2);
         var libre = await CrearEdicionEnBdAsync(conPlazas, Now.AddDays(20));
-        TestOcupacionReader.Set(completa.Id, pagadas: 2);
+        await CrearReservasEnBdAsync(completa.Id, pagadas: 2);
 
         var todasCompletas = await CrearCursoEnBdAsync();
         var primera = await CrearEdicionEnBdAsync(todasCompletas, Now.AddDays(10), plazas: 1);
         var segunda = await CrearEdicionEnBdAsync(todasCompletas, Now.AddDays(20), plazas: 1);
-        TestOcupacionReader.Set(primera.Id, pagadas: 1);
-        TestOcupacionReader.Set(segunda.Id, pagadas: 0, pendientes: 1);
+        await CrearReservasEnBdAsync(primera.Id, pagadas: 1);
+        await CrearReservasEnBdAsync(segunda.Id, pagadas: 0, pendientes: 1);
 
         var sinEdiciones = await CrearCursoEnBdAsync();
         await CrearEdicionEnBdAsync(sinEdiciones, Now.AddDays(10), estado: EstadoEdicion.Oculta);
@@ -108,8 +108,11 @@ public class CursosPublicosTests(CustomWebApplicationFactory factory) : Catalogo
         var disponible = await CrearEdicionEnBdAsync(curso, Now.AddDays(10), plazas: 10);
         var ultimas = await CrearEdicionEnBdAsync(curso, Now.AddDays(11), plazas: 10);
         var completa = await CrearEdicionEnBdAsync(curso, Now.AddDays(12), plazas: 10);
-        TestOcupacionReader.Set(ultimas.Id, pagadas: 5, pendientes: 2);
-        TestOcupacionReader.Set(completa.Id, pagadas: 10);
+        await CrearReservasEnBdAsync(ultimas.Id, pagadas: 5, pendientes: 2);
+        await CrearReservasEnBdAsync(completa.Id, pagadas: 10);
+        // Bookings that hold no seat must not count.
+        await CrearReservasEnBdAsync(disponible.Id, expiradas: 2, canceladas: 1, pendientesCaducadas: 1);
+        await CrearReservasEnBdAsync(ultimas.Id, expiradas: 1, pendientesCaducadas: 2);
 
         var ediciones = await ReadAsync<List<EdicionPublicaTestDto>>(
             await SendAsync(HttpMethod.Get, $"/api/cursos/{curso.Slug}/ediciones"));

@@ -3,6 +3,7 @@ using ZoiNailAcademy.Infrastructure.Authentication;
 using ZoiNailAcademy.Infrastructure.Data;
 using ZoiNailAcademy.Infrastructure.Data.Seeding;
 using ZoiNailAcademy.Infrastructure.Settings;
+using ZoiNailAcademy.Infrastructure.Stripe;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +31,12 @@ public static class DependencyInjection
 
         services.Configure<ReservasOptions>(configuration.GetSection(ReservasOptions.SectionName));
         services.AddSingleton<IReservasSettings, ReservasSettings>();
+        services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
+        services.AddSingleton<IAppSettings, AppSettings>();
+
+        services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
+        services.AddSingleton<IStripeGateway, StripeGateway>();
+        services.AddSingleton<IStripeWebhookParser, StripeWebhookParser>();
 
         services.AddSingleton<IAuthTokenSettings, AuthTokenSettings>();
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();

@@ -63,6 +63,17 @@ dotnet test tests/IntegrationTests   # integración (requiere Docker)
 
 Los errores de negocio son `409` con `code` (y datos extra como `ocupadas` o `reservas`) en el `ProblemDetails`; ver la tabla de códigos en `Docs/00-contrato-y-convenciones.md`. Los 4 cursos iniciales se siembran al arrancar desde `src/ZoiNailAcademy.Infrastructure/Data/Seed/cursos.json` (solo si no existe el slug; nunca se sobrescriben). Hasta F03 no hay reservas, así que las plazas libres son las totales: el único punto que cambia F03 es `OcupacionReader`.
 
+### Reservas con tarjeta (F03)
+
+| Método | Ruta | Auth | Descripción |
+| --- | --- | --- | --- |
+| POST | `/api/reservas/tarjeta` | No (rate limit `reservas`) | `{edicionId, nombre, email, telefono, aceptaCondiciones, website}` → `{codigo, checkoutUrl}`; 409 `sin_plazas` / `edicion_no_reservable`, 429 `limite_pendientes`, 502 si falla Stripe |
+| GET | `/api/reservas/{codigo}` | No | Estado público de la reserva, sin datos personales |
+| POST | `/api/reservas/{codigo}/abandonar` | No (rate limit `reservas`) | 204; libera la plaza si el comprador vuelve del Checkout sin pagar |
+| POST | `/api/stripe/webhook` | Firma `Stripe-Signature` | `checkout.session.completed` / `expired`; idempotente por id de evento |
+
+Nunca se vende más de una plaza de las que hay: cada reserva bloquea la fila de la edición (`SELECT … FOR UPDATE`) antes de contar plazas. En Stripe hay que dar de alta el endpoint `https://<dominio>/api/stripe/webhook` con los eventos `checkout.session.completed` y `checkout.session.expired`, y copiar su secreto de firma en `Stripe__WebhookSecret`.
+
 `/api/auth/register` no existe. Los controllers de `/api/admin/**` llevan `[Authorize(Policy = AuthorizationPolicies.Backoffice)]` a nivel de clase (y `SuperAdmin` en las acciones del desarrollador); un test de integración recorre esas rutas dinámicamente y falla si alguna queda abierta.
 
 ## Configuración
@@ -85,6 +96,10 @@ Lista completa con ejemplos en [`.env.example`](.env.example). Toda variable nue
 | `Reservas__CierreHorasAntes` | Horas antes del inicio en que se cierran las reservas y la edición deja de verse en la web (24) |
 | `Reservas__UmbralUltimasPlazas` | Plazas libres a partir de las cuales se muestra «últimas plazas» (3) |
 | `App__TimeZone` | Zona horaria de presentación (`Europe/Madrid`); la API guarda y devuelve UTC |
+| `App__BaseUrl` | URL pública de la web, para las URLs de vuelta de Stripe Checkout |
+| `Reservas__StripeMinutosBloqueo` | Duración de la sesión de Checkout en minutos (mínimo 30; la reserva dura 5 más) |
+| `Reservas__MaxPendientesPorContacto` | Reservas pendientes vigentes permitidas por email o teléfono (2) |
+| `Stripe__SecretKey`, `Stripe__WebhookSecret` | **Secretos** de Stripe (`sk_…` y `whsec_…` del endpoint del webhook) |
 | `Swagger__EnableInProduction` | `true` para exponer Swagger temporalmente en producción |
 
 CORS solo se configura en `Development` (`Cors:AllowedOrigins`): en producción el navegador habla con Next y Next reenvía `/api/*` por la red privada, así que todo es mismo origen.

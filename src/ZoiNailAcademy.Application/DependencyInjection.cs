@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<Authentication.AuthTokenIssuer>();
         services.AddScoped<Common.Interfaces.IOcupacionReader, Ediciones.OcupacionReader>();
         services.AddScoped<Ediciones.EdicionesPublicas>();
+        services.AddScoped<Reservas.CrearReservaService>();
 
         return services;
     }
