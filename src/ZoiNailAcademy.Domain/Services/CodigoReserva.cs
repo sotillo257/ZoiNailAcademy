@@ -21,4 +21,33 @@ public static partial class CodigoReserva
         Prefijo + new string(RandomNumberGenerator.GetItems<char>(Alfabeto, LongitudAleatoria));
 
     public static bool EsValido(string? codigo) => codigo is not null && Formato().IsMatch(codigo);
+
+    /// <summary>
+    /// Reads a code however the client typed it (<c>CUR-7K4Q2M</c>, <c>cur 7k4q2m</c>, <c>7K4Q2M</c>): blanks and
+    /// dashes are ignored, case too, and the <c>CUR</c> prefix is optional.
+    /// </summary>
+    /// <param name="codigo">The code as stored (<c>CUR-XXXXXX</c>) when the text looks like one.</param>
+    public static bool TryNormalizar(string? texto, out string codigo)
+    {
+        codigo = string.Empty;
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            return false;
+        }
+
+        var limpio = string.Concat(texto.Where(c => !char.IsWhiteSpace(c) && c != '-')).ToUpperInvariant();
+        var prefijo = Prefijo.TrimEnd('-');
+        if (limpio.Length == prefijo.Length + LongitudAleatoria && limpio.StartsWith(prefijo, StringComparison.Ordinal))
+        {
+            limpio = limpio[prefijo.Length..];
+        }
+
+        if (limpio.Length != LongitudAleatoria || !limpio.All(c => Alfabeto.Contains(c)))
+        {
+            return false;
+        }
+
+        codigo = Prefijo + limpio;
+        return true;
+    }
 }

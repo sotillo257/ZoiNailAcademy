@@ -62,14 +62,14 @@ interface ReservaAdminDto {
   - Si parece un código (`CUR-` opcional + 6 caracteres del alfabeto), búsqueda exacta por código normalizado (mayúsculas, sin espacios, admite que escriban `cur7k4q2m` o `7K4Q2M`).
   - Si no, contiene en nombre, email o teléfono (teléfono comparando solo dígitos, para que `612345678` encuentre `+34612345678`).
 - Orden: `RequiereRevision` primero, luego pendientes por `ExpiraEn` ascendente (las que caducan antes, arriba), luego expiradas recientes.
-- Respuesta `ReservaAdminDto[]` con un campo extra `plazaDisponible: boolean` para las expiradas (si se podría confirmar todavía).
+- Respuesta `ReservaAdminDto[]` con un campo extra `plazaDisponible: boolean` para las expiradas (si se podría confirmar todavía). El campo es opcional en `ReservaAdminDto` (`plazaDisponible?: boolean`) y no aparece en el resto de respuestas.
 
 ### `GET /api/admin/reservas/{id}`
 - `ReservaAdminDto` de cualquier estado.
 - Para la búsqueda directa por código desde la portada: `GET /api/admin/reservas/pendientes?q={codigo}` cubre el caso habitual; este endpoint sirve para el detalle.
 
 ### Resolver revisión
-`POST /api/admin/reservas/{id}/marcar-revisada` body `{ version, nota }` → `RequiereRevision = false` y guarda la nota (p. ej. "Reembolsado el 05/12").
+`POST /api/admin/reservas/{id}/marcar-revisada` body `{ version, nota }` → `RequiereRevision = false` y guarda la nota (p. ej. "Reembolsado el 05/12"). Responde como las acciones de F04: `{ reserva: ReservaAdminDto, avisos: [] }`; `nota` es opcional (≤ 500).
 
 ## Reglas
 

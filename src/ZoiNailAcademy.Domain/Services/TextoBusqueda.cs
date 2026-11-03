@@ -9,6 +9,23 @@ namespace ZoiNailAcademy.Domain.Services;
 /// </summary>
 public static class TextoBusqueda
 {
+    private static readonly char[] SeparadoresTelefono = [' ', '-', '.', '(', ')', '+'];
+
+    /// <summary>
+    /// The digits of a phone typed with spaces, dashes or prefix (<c>+34 612 34 56</c> → <c>346123456</c>), or
+    /// null when the text is not a phone, so it can be matched against a stored E.164 number.
+    /// </summary>
+    public static string? DigitosTelefono(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            return null;
+        }
+
+        var digitos = string.Concat(texto.Split(SeparadoresTelefono, StringSplitOptions.RemoveEmptyEntries));
+        return digitos.Length > 0 && digitos.All(char.IsAsciiDigit) ? digitos : null;
+    }
+
     public static string Normalizar(string? texto)
     {
         if (string.IsNullOrWhiteSpace(texto))

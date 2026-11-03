@@ -27,4 +27,32 @@ public class CodigoReservaTests
     {
         CodigoReserva.EsValido(codigo).Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData("CUR-7K4Q2M")]
+    [InlineData("cur 7k4q2m")]
+    [InlineData("cur-7k4q2m")]
+    [InlineData("7K4Q2M")]
+    [InlineData(" 7k4 q2m ")]
+    [InlineData("CUR7K4Q2M")]
+    public void TryNormalizar_CodeTypedInDifferentWays_ReturnsTheStoredCode(string texto)
+    {
+        CodigoReserva.TryNormalizar(texto, out var codigo).Should().BeTrue();
+        codigo.Should().Be("CUR-7K4Q2M");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("7K4Q2")]
+    [InlineData("7K4Q2MM")]
+    [InlineData("CUR-7K4Q2")]
+    [InlineData("7K4O2M")]
+    [InlineData("lucia@mail.com")]
+    [InlineData("612345678")]
+    public void TryNormalizar_TextThatIsNotACode_ReturnsFalse(string? texto)
+    {
+        CodigoReserva.TryNormalizar(texto, out var codigo).Should().BeFalse();
+        codigo.Should().BeEmpty();
+    }
 }

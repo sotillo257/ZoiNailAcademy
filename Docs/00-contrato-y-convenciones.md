@@ -71,9 +71,9 @@ Este documento es la referencia compartida por las 11 features. Si una spec y es
 | POST | `/api/admin/ediciones` | F02 |
 | PUT | `/api/admin/ediciones/{id}` | F02 |
 | DELETE | `/api/admin/ediciones/{id}` | F02 |
-| GET | `/api/admin/ediciones/{id}/reservas` | F07 |
+| GET | `/api/admin/ediciones/{id}/reservas?incluir=` | F07 |
 | GET | `/api/admin/ediciones/{id}/reservas.csv` | F07 |
-| GET | `/api/admin/reservas/pendientes?q=` | F07 |
+| GET | `/api/admin/reservas/pendientes?q=&metodo=` | F07 |
 | GET | `/api/admin/reservas/{id}` | F07 |
 | POST | `/api/admin/reservas/{id}/confirmar` | F04 |
 | POST | `/api/admin/reservas/{id}/cancelar` | F04 |

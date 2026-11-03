@@ -171,4 +171,39 @@ public class ReservaTests
 
         return reserva;
     }
+
+    [Fact]
+    public void Create_StoresNameEmailAndPhoneNormalizedForSearch()
+    {
+        var reserva = Reserva.Create(
+            CatalogoFactory.Edicion(), "CUR-ABC234", MetodoPago.Manual, " José Núñez ", "Jose@Mail.COM", "+34612345678",
+            Now.AddHours(48), Now);
+
+        reserva.Busqueda.Should().Be("jose nunez jose@mail.com +34612345678");
+    }
+
+    [Fact]
+    public void MarcarRevisada_PaymentWithoutSeat_ClearsTheMarkAndAppendsTheNote()
+    {
+        var reserva = CatalogoFactory.Reserva();
+        reserva.Expirar(Now);
+        reserva.RegistrarPagoSinPlaza("pi_123");
+
+        reserva.MarcarRevisada(" Reembolsado el 05/12 ");
+
+        reserva.RequiereRevision.Should().BeFalse();
+        reserva.NotaInterna.Should().Be("Reembolsado el 05/12");
+        reserva.Estado.Should().Be(EstadoReserva.Expirada);
+    }
+
+    [Fact]
+    public void MarcarRevisada_WithoutTheMark_ChangesNothing()
+    {
+        var reserva = CatalogoFactory.Reserva();
+
+        reserva.MarcarRevisada("Nota");
+
+        reserva.RequiereRevision.Should().BeFalse();
+        reserva.NotaInterna.Should().BeNull();
+    }
 }
