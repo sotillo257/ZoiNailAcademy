@@ -22,4 +22,13 @@ public interface IAppDbContext
     /// of the same edition are serialized. Must be called inside <see cref="BeginTransactionAsync"/>.
     /// </summary>
     Task BloquearEdicionAsync(Guid edicionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tries to take a PostgreSQL advisory lock (session level) and keeps the connection open while it is
+    /// held. Returns null when another process holds it; disposing the result releases it.
+    /// </summary>
+    Task<IAsyncDisposable?> TryAdquirirLockAsync(long clave, CancellationToken cancellationToken = default);
+
+    /// <summary>Forgets every tracked change (after a failed save, so it does not leak into the next one).</summary>
+    void DescartarCambios();
 }

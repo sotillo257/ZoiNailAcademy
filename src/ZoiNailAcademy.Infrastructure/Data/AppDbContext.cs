@@ -37,6 +37,41 @@ public class AppDbContext : DbContext, IAppDbContext
             $@"SELECT 1 FROM ""Ediciones"" WHERE ""Id"" = {edicionId} FOR UPDATE", cancellationToken);
     }
 
+    public async Task<IAsyncDisposable?> TryAdquirirLockAsync(long clave, CancellationToken cancellationToken = default)
+    {
+        // Session-level lock: it lives as long as this connection, so the connection stays open until disposal.
+        await Database.OpenConnectionAsync(cancellationToken);
+        var adquirido = (await Database
+            .SqlQuery<bool>($"SELECT pg_try_advisory_lock({clave}) AS \"Value\"")
+            .ToListAsync(cancellationToken)).Single();
+
+        if (adquirido)
+        {
+            return new AdvisoryLock(this, clave);
+        }
+
+        await Database.CloseConnectionAsync();
+        return null;
+    }
+
+    public void DescartarCambios() => ChangeTracker.Clear();
+
+    private sealed class AdvisoryLock(AppDbContext dbContext, long clave) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                await dbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_unlock({clave})");
+            }
+            finally
+            {
+                // Closing the connection also releases the lock if the unlock above failed.
+                await dbContext.Database.CloseConnectionAsync();
+            }
+        }
+    }
+
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var now = _timeProvider.GetUtcNow();

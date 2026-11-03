@@ -5,13 +5,16 @@ using Microsoft.EntityFrameworkCore;
 using ZoiNailAcademy.Application.Common;
 using ZoiNailAcademy.Application.Common.Exceptions;
 using ZoiNailAcademy.Application.Common.Interfaces;
+using ZoiNailAcademy.Application.Reservas;
 using ZoiNailAcademy.Domain.Common.Exceptions;
+using ZoiNailAcademy.Domain.Entities;
+using ZoiNailAcademy.Domain.Enums;
 
 namespace ZoiNailAcademy.Application.Ediciones.EditarEdicion;
 
 public class EditarEdicionHandler(
     IAppDbContext dbContext, IOcupacionReader ocupacionReader, IPublisher publisher, IReservasSettings settings,
-    TimeProvider timeProvider,
+    IStripeGateway stripe, TimeProvider timeProvider,
     ILogger<EditarEdicionHandler> logger)
     : IRequestHandler<EditarEdicionCommand, Result<EdicionEditadaDto>>
 {
@@ -36,7 +39,18 @@ public class EditarEdicionHandler(
 
         var cambio = edicion.Actualizar(
             request.Inicio, request.Plazas, request.Estado, request.Notas, ocupacion.Total,
-            request.ConfirmarCambioFecha, now);
+            request.ConfirmarCambioFecha, now, pagadas: ocupacion.Pagadas);
+
+        // Cancelling the edition cancels its pending bookings in the same save; paid ones are refunded by hand.
+        var pendientesCanceladas = cambio.Cancelada
+            ? await dbContext.Reservas
+                .Where(r => r.EdicionId == edicion.Id && r.Estado == EstadoReserva.Pendiente)
+                .ToListAsync(cancellationToken)
+            : [];
+        foreach (var reserva in pendientesCanceladas)
+        {
+            reserva.Cancelar(now);
+        }
 
         try
         {
@@ -53,9 +67,31 @@ public class EditarEdicionHandler(
             await publisher.PublicarTrasCommitAsync(new EdicionPublicadaEvent(edicion.Id), logger, cancellationToken);
         }
 
-        // TODO F04: when cambio.Cancelada, publish the event that cancels the pending bookings of this edition.
+        foreach (var reserva in pendientesCanceladas)
+        {
+            await ExpirarSesionStripeAsync(reserva, cancellationToken);
+            await publisher.PublicarTrasCommitAsync(new ReservaCanceladaEvent(reserva.Id), logger, cancellationToken);
+        }
 
         return Result.Success(new EdicionEditadaDto(
             EdicionAdminDto.From(edicion, ocupacion, now, settings.CierreAntesDeInicio), cambio.Avisos));
+    }
+
+    // After the commit: a session left open could still be paid (it would arrive as a late payment).
+    private async Task ExpirarSesionStripeAsync(Reserva reserva, CancellationToken cancellationToken)
+    {
+        if (reserva is not { Metodo: MetodoPago.Stripe, StripeSessionId: { } sessionId })
+        {
+            return;
+        }
+
+        try
+        {
+            await stripe.ExpirarSesionAsync(sessionId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "No se pudo expirar la sesión de Stripe de la reserva {Codigo}.", reserva.Codigo);
+        }
     }
 }

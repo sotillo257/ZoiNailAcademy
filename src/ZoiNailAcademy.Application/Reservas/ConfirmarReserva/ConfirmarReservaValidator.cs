@@ -1,0 +1,13 @@
+using FluentValidation;
+using ZoiNailAcademy.Domain.Entities;
+
+namespace ZoiNailAcademy.Application.Reservas.ConfirmarReserva;
+
+public class ConfirmarReservaValidator : AbstractValidator<ConfirmarReservaCommand>
+{
+    public ConfirmarReservaValidator()
+    {
+        RuleFor(x => x.Version).Must(v => uint.TryParse(v, out _)).WithMessage(ReservaAccionValidation.VersionMessage);
+        RuleFor(x => x.Nota).MaximumLength(Reserva.NotaInternaMaxLength).WithMessage(ReservaAccionValidation.NotaMessage);
+    }
+}

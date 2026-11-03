@@ -26,6 +26,8 @@ public class CatalogoTestContext
     public List<StripeEvento> StripeEventos { get; private set; } = [];
     public Mock<IDbContextTransaction> Transaction { get; } = new();
     public Mock<IAppSettings> AppSettings { get; } = new();
+    public Mock<IPagoSettings> Pago { get; } = new();
+    public Mock<IStripeGateway> Stripe { get; } = new();
 
     public CatalogoTestContext()
     {
@@ -38,7 +40,14 @@ public class CatalogoTestContext
         Settings.Setup(x => x.MaxPendientesPorContacto).Returns(2);
         AppSettings.Setup(x => x.BaseUrl).Returns("https://web.test");
         AppSettings.Setup(x => x.TimeZone).Returns(TimeZoneInfo.FindSystemTimeZoneById("Europe/Madrid"));
+        Settings.Setup(x => x.ManualCaducidad).Returns(TimeSpan.FromHours(48));
+        Pago.Setup(x => x.Titular).Returns("Zoi Nail Academy");
+        Pago.Setup(x => x.Iban).Returns("ES12 3456");
+        Pago.Setup(x => x.BizumTelefono).Returns("600111222");
+        Pago.Setup(x => x.WhatsAppTelefono).Returns("34600111222");
         DbContext.Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Transaction.Object);
+        DbContext.Setup(x => x.TryAdquirirLockAsync(It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Mock<IAsyncDisposable>().Object);
         SetupCursos();
         SetupEdiciones();
         SetupReservas();
@@ -68,6 +77,8 @@ public class CatalogoTestContext
     public void VerifyPublished<TEvent>(Func<TEvent, bool> match, Times times) where TEvent : INotification =>
         Publisher.Verify(
             x => x.Publish(It.Is<INotification>(e => e is TEvent && match((TEvent)e)), It.IsAny<CancellationToken>()), times);
+
+    public ZoiNailAcademy.Application.Reservas.ReservaPublicaDtoFactory CreateDtoFactory() => new(Pago.Object, AppSettings.Object);
 
     public EdicionesPublicas CreateEdicionesPublicas() =>
         new(DbContext.Object, OcupacionReader.Object, Settings.Object, TimeProvider);

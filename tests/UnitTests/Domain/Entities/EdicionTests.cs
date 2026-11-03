@@ -235,6 +235,33 @@ public class EdicionTests
         cambio.Avisos.Should().ContainSingle().Which.Should().Be("Tiene 2 inscritos: avisa y reembolsa manualmente");
     }
 
+    [Fact]
+    public void Actualizar_CancellingWithPaidCount_WarnsWithPaidBookings()
+    {
+        var edicion = CatalogoFactory.Edicion();
+
+        var cambio = edicion.Actualizar(edicion.Inicio, 10, EstadoEdicion.Cancelada, null, ocupadas: 3, false, Now, pagadas: 1);
+
+        cambio.Avisos.Should().ContainSingle().Which.Should().Be("Tiene 1 inscritos: avisa y reembolsa manualmente");
+    }
+
+    [Fact]
+    public void Actualizar_CancellingWithOnlyPendingBookings_HasNoWarning()
+    {
+        var edicion = CatalogoFactory.Edicion();
+
+        edicion.Actualizar(edicion.Inicio, 10, EstadoEdicion.Cancelada, null, ocupadas: 2, false, Now, pagadas: 0)
+            .Avisos.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void CierreReservas_IsStartMinusClosingWindow()
+    {
+        var edicion = CatalogoFactory.Edicion(inicio: Now.AddDays(5));
+
+        edicion.CierreReservas(Cierre).Should().Be(Now.AddDays(4));
+    }
+
     private static Edicion Cancelada()
     {
         var edicion = CatalogoFactory.Edicion();

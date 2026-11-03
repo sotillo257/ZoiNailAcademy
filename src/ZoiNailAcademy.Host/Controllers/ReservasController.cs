@@ -6,6 +6,7 @@ using ZoiNailAcademy.Application.Reservas;
 using ZoiNailAcademy.Application.Reservas.AbandonarReserva;
 using ZoiNailAcademy.Application.Reservas.ObtenerReservaPublica;
 using ZoiNailAcademy.Application.Reservas.ReservarConTarjeta;
+using ZoiNailAcademy.Application.Reservas.ReservarManual;
 using ZoiNailAcademy.Host.RateLimiting;
 
 namespace ZoiNailAcademy.Host.Controllers;
@@ -25,6 +26,20 @@ public class ReservasController(ISender sender) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
     public async Task<IActionResult> Tarjeta(ReservarConTarjetaCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return Ok(result.Value);
+    }
+
+    /// <summary>Transfer or Bizum: holds the seat and returns the payment details and the WhatsApp link.</summary>
+    [HttpPost("manual")]
+    [EnableRateLimiting(RateLimitPolicies.Reservas)]
+    [ProducesResponseType<ReservaPublicaDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> Manual(ReservarManualCommand command, CancellationToken cancellationToken)
     {
         var result = await sender.Send(command, cancellationToken);
         return Ok(result.Value);

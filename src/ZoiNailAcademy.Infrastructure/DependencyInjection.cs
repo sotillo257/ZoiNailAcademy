@@ -33,6 +33,8 @@ public static class DependencyInjection
         services.AddSingleton<IReservasSettings, ReservasSettings>();
         services.Configure<AppOptions>(configuration.GetSection(AppOptions.SectionName));
         services.AddSingleton<IAppSettings, AppSettings>();
+        services.Configure<PagoOptions>(configuration.GetSection(PagoOptions.SectionName));
+        services.AddSingleton<IPagoSettings, PagoSettings>();
 
         services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
         services.AddSingleton<IStripeGateway, StripeGateway>();

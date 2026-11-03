@@ -14,4 +14,8 @@ public class ReservasSettings(IOptions<ReservasOptions> options) : IReservasSett
     public TimeSpan StripeBloqueo => TimeSpan.FromMinutes(Math.Max(StripeMinutosMinimos, options.Value.StripeMinutosBloqueo));
 
     public int MaxPendientesPorContacto => options.Value.MaxPendientesPorContacto;
+
+    public TimeSpan ManualCaducidad => TimeSpan.FromHours(options.Value.ManualHorasCaducidad);
+
+    public TimeSpan JobIntervalo => TimeSpan.FromMinutes(Math.Max(1, options.Value.JobIntervaloMinutos));
 }
