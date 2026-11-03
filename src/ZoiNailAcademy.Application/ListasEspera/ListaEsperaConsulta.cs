@@ -7,8 +7,6 @@ namespace ZoiNailAcademy.Application.ListasEspera;
 /// <summary>Filters and order shared by the backoffice listing and the CSV export.</summary>
 public static class ListaEsperaConsulta
 {
-    private static readonly char[] SeparadoresTelefono = [' ', '-', '.', '(', ')', '+'];
-
     public static IQueryable<ListaEspera> Filtrar(
         IQueryable<ListaEspera> query, Guid? cursoId, bool? contactado = null, string? q = null)
     {
@@ -28,8 +26,8 @@ public static class ListaEsperaConsulta
         if (texto.Length > 0)
         {
             // A phone may be typed with spaces or dashes ("612 34 56"): compare its digits with the stored E.164.
-            var digitos = string.Concat(texto.Split(SeparadoresTelefono, StringSplitOptions.RemoveEmptyEntries));
-            query = digitos.Length > 0 && digitos.All(char.IsAsciiDigit)
+            var digitos = TextoBusqueda.DigitosTelefono(texto);
+            query = digitos is not null
                 ? query.Where(e => e.Busqueda.Contains(texto) || e.Telefono.Contains(digitos))
                 : query.Where(e => e.Busqueda.Contains(texto));
         }

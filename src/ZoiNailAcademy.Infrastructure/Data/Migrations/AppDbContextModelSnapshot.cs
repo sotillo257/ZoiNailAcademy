@@ -337,6 +337,11 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Busqueda")
+                        .IsRequired()
+                        .HasMaxLength(342)
+                        .HasColumnType("character varying(342)");
+
                     b.Property<DateTimeOffset?>("CanceladaEn")
                         .HasColumnType("timestamp with time zone");
 

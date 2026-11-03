@@ -14,6 +14,7 @@ public class Reserva : BaseAuditableEntity
     public const int TelefonoMaxLength = 20;
     public const int StripeIdMaxLength = 100;
     public const int NotaInternaMaxLength = 500;
+    public const int BusquedaMaxLength = NombreMaxLength + EmailMaxLength + TelefonoMaxLength + 2;
 
     public string Codigo { get; private set; } = null!;
     public Guid EdicionId { get; private set; }
@@ -49,6 +50,12 @@ public class Reserva : BaseAuditableEntity
     /// <summary>Optimistic concurrency token (PostgreSQL <c>xmin</c>).</summary>
     public uint Version { get; private set; }
 
+    /// <summary>
+    /// Name, email and phone normalized with <see cref="TextoBusqueda"/> (backoffice search without case or accents).
+    /// Set once: those fields never change.
+    /// </summary>
+    public string Busqueda { get; private set; } = null!;
+
     private Reserva()
     {
     }
@@ -73,7 +80,7 @@ public class Reserva : BaseAuditableEntity
             throw new DomainException("La caducidad de la reserva debe estar en el futuro.");
         }
 
-        return new Reserva
+        var reserva = new Reserva
         {
             Id = Guid.NewGuid(),
             Codigo = codigo,
@@ -88,6 +95,8 @@ public class Reserva : BaseAuditableEntity
             ExpiraEn = expiraEn.ToUniversalTime(),
             ConsentimientoEn = now.ToUniversalTime()
         };
+        reserva.Busqueda = TextoBusqueda.Normalizar($"{reserva.Nombre} {reserva.Email} {reserva.Telefono}");
+        return reserva;
     }
 
     /// <summary>Same rule as <see cref="PlazasCalculator.OcupaPlaza"/>, translatable to SQL.</summary>
@@ -256,6 +265,21 @@ public class Reserva : BaseAuditableEntity
 
         var nueva = desde.AddHours(horas);
         ExpiraEn = nueva < cierre ? nueva : cierre;
+    }
+
+    /// <summary>
+    /// The client handled a payment that arrived without a seat (usually refunding it): clears
+    /// <see cref="RequiereRevision"/> and appends the note. Nothing changes when the mark is already clear.
+    /// </summary>
+    public void MarcarRevisada(string? nota)
+    {
+        if (!RequiereRevision)
+        {
+            return;
+        }
+
+        RequiereRevision = false;
+        AnadirNota(nota);
     }
 
     private void AnadirNota(string? nota)

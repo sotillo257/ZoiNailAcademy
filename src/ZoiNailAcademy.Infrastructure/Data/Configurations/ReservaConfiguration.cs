@@ -21,6 +21,7 @@ public class ReservaConfiguration : IEntityTypeConfiguration<Reserva>
         builder.Property(r => r.StripeSessionId).HasMaxLength(Reserva.StripeIdMaxLength);
         builder.Property(r => r.StripePaymentIntentId).HasMaxLength(Reserva.StripeIdMaxLength);
         builder.Property(r => r.NotaInterna).HasMaxLength(Reserva.NotaInternaMaxLength);
+        builder.Property(r => r.Busqueda).IsRequired().HasMaxLength(Reserva.BusquedaMaxLength);
 
         // PostgreSQL xmin: the webhook, the F04 job and the backoffice may change a booking at the same time.
         builder.Property(r => r.Version).IsRowVersion();

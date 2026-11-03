@@ -16,4 +16,25 @@ public class TextoBusquedaTests
     {
         TextoBusqueda.Normalizar(texto).Should().Be(esperado);
     }
+
+    [Theory]
+    [InlineData("612345678", "612345678")]
+    [InlineData("612 34 56 78", "612345678")]
+    [InlineData("+34 612-345.678", "34612345678")]
+    [InlineData("(612) 345 678", "612345678")]
+    public void DigitosTelefono_PhoneWithSeparators_ReturnsItsDigits(string texto, string esperado)
+    {
+        TextoBusqueda.DigitosTelefono(texto).Should().Be(esperado);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(" ")]
+    [InlineData("+ -")]
+    [InlineData("lucia 612")]
+    [InlineData("7K4Q2M")]
+    public void DigitosTelefono_TextThatIsNotAPhone_ReturnsNull(string? texto)
+    {
+        TextoBusqueda.DigitosTelefono(texto).Should().BeNull();
+    }
 }

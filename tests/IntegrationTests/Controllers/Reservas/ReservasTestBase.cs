@@ -135,6 +135,7 @@ public record ReservaPublicaTestDto(
 public record ReservaAdminTestDto(
     Guid Id, string Codigo, Guid EdicionId, string Curso, DateTimeOffset Inicio, string Metodo, string Estado,
     string Nombre, string Email, string Telefono, decimal Importe, DateTimeOffset CreadaEn, DateTimeOffset? PagadaEn,
-    DateTimeOffset ExpiraEn, bool RequiereRevision, string? NotaInterna, string? StripePaymentIntentId, string Version);
+    DateTimeOffset ExpiraEn, bool RequiereRevision, string? NotaInterna, string? StripePaymentIntentId, string Version,
+    bool? PlazaDisponible = null);
 
 public record ReservaAccionTestDto(ReservaAdminTestDto Reserva, List<string> Avisos);
