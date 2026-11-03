@@ -35,6 +35,20 @@ public class ReservaTarjetaTests(CustomWebApplicationFactory factory) : Reservas
     }
 
     [Fact]
+    public async Task Tarjeta_CourseWithSeatDeposit_ChargesOnlyTheDeposit()
+    {
+        var edicion = await CrearEdicionReservableAsync(precioReserva: 35.50m);
+
+        var creada = await ReadAsync<ReservaTarjetaTestDto>(await ReservarAsync(Formulario(edicion.Id)));
+
+        var reserva = (await BuscarReservaAsync(creada.Codigo))!;
+        (reserva.Importe, reserva.PrecioCurso).Should().Be((35.50m, 120m));
+        var sesion = Factory.StripeGateway.Sesion(reserva.StripeSessionId!);
+        sesion.ImporteCentimos.Should().Be(3550);
+        sesion.Concepto.Should().StartWith("Reserva de plaza: Curso de test — ");
+    }
+
+    [Fact]
     public async Task Tarjeta_ConcurrentRequestsForTheLastSeat_CreateExactlyOneBooking()
     {
         var edicion = await CrearEdicionReservableAsync(plazas: 1);

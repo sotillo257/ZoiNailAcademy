@@ -12,7 +12,8 @@ public static class ReservaPagadaCompradorEmail
                 ("Curso", r.Curso),
                 ("Fecha y hora", EmailFormato.FechaLarga(r.Inicio, marca.Zona)),
                 ("Lugar", r.Ubicacion),
-                ("Importe", EmailFormato.Importe(r.Importe)),
+                (r.ImporteEtiqueta, EmailFormato.Importe(r.Importe)),
+                ("Resto a pagar en persona", r.RestoTexto),
                 ("Pago", r.MetodoTexto))
             .Parrafo(Contacto(marca))
             .Parrafo($"¡Nos vemos pronto!\n{marca.NombreAcademia}");

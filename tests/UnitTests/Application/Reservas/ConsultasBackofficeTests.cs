@@ -284,7 +284,7 @@ public class ExportarAsistentesTests
     [Fact]
     public async Task Handle_ExportsOnlyPaidBookingsInMadridTimeWithDecimalComma()
     {
-        var curso = CatalogoFactory.Curso("acrilico", precio: 149.5m);
+        var curso = CatalogoFactory.Curso("acrilico", precio: 149.5m, precioReserva: 40m);
         var edicion = CatalogoFactory.Edicion(curso, new DateTimeOffset(2026, 12, 5, 9, 0, 0, TimeSpan.Zero));
         var tarjeta = CatalogoFactory.Reserva(edicion);
         tarjeta.Pagar(new DateTimeOffset(2026, 11, 3, 23, 30, 0, TimeSpan.Zero));
@@ -301,9 +301,9 @@ public class ExportarAsistentesTests
         archivo.Contenido.Take(3).Should().Equal(0xEF, 0xBB, 0xBF);
         var lineas = Encoding.UTF8.GetString(archivo.Contenido[3..]).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         lineas.Should().Equal(
-            "Código;Nombre;Teléfono;Email;Método;Importe;Fecha de pago",
-            $"{manual.Codigo};Lucía Pérez;'+34612345678;lucia@mail.com;Transferencia o Bizum;149,50;03/11/2026 11:05",
-            $"{tarjeta.Codigo};Lucía Pérez;'+34612345678;lucia@mail.com;Tarjeta;149,50;04/11/2026 00:30");
+            "Código;Nombre;Teléfono;Email;Método;Importe;Resto en persona;Fecha de pago",
+            $"{manual.Codigo};Lucía Pérez;'+34612345678;lucia@mail.com;Transferencia o Bizum;40,00;109,50;03/11/2026 11:05",
+            $"{tarjeta.Codigo};Lucía Pérez;'+34612345678;lucia@mail.com;Tarjeta;40,00;109,50;04/11/2026 00:30");
     }
 
     [Fact]

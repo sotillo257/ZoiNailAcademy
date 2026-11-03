@@ -113,6 +113,34 @@ public class AdminCursosTests(CustomWebApplicationFactory factory) : CatalogoTes
     }
 
     [Fact]
+    public async Task Crear_SeatDepositAbovePrice_Returns400OnPrecioReserva()
+    {
+        var response = await SendAsync(
+            HttpMethod.Post, "/api/admin/cursos",
+            content: JsonContent.Create(new { nombre = "Gel", slug = UniqueSlug(), descripcionCorta = "c", descripcion = "d", precio = 100, precioReserva = 150, imagen = "/i.jpg", activo = true, orden = 1 }),
+            accessToken: await SuperAdminTokenAsync());
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadJsonAsync(response)).GetProperty("errors").TryGetProperty("PrecioReserva", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Crear_WithAndWithoutSeatDeposit_StoresItOrChargesTheWholePrice()
+    {
+        var token = await SuperAdminTokenAsync();
+        var sinSenal = await CrearAsync(token, UniqueSlug());
+
+        var response = await SendAsync(
+            HttpMethod.Post, "/api/admin/cursos",
+            content: JsonContent.Create(new { nombre = "Gel", slug = UniqueSlug(), descripcionCorta = "c", descripcion = "d", precio = 189.90m, precioReserva = 50m, imagen = "/i.jpg", activo = true, orden = 1 }),
+            accessToken: token);
+
+        sinSenal.PrecioReserva.Should().Be(189.90m);
+        response.StatusCode.Should().Be(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
+        (await ReadAsync<CursoAdminTestDto>(response)).PrecioReserva.Should().Be(50m);
+    }
+
+    [Fact]
     public async Task Crear_InvalidFields_Returns400PerField()
     {
         var response = await SendAsync(

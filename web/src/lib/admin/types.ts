@@ -51,7 +51,10 @@ export interface ReservaAdminDto {
   nombre: string;
   email: string;
   telefono: string;
+  /** Paid online (the seat deposit). */
   importe: number;
+  /** Full course price: `precioCurso - importe` is paid in person. */
+  precioCurso: number;
   creadaEn: string;
   pagadaEn: string | null;
   expiraEn: string;
@@ -95,6 +98,8 @@ export interface CursoAdminDto {
   descripcionCorta: string;
   descripcion: string;
   precio: number;
+  /** Seat deposit paid when booking; equal to `precio` when the whole course is paid online. */
+  precioReserva: number;
   imagen: string;
   ubicacion: string | null;
   duracionTexto: string | null;
@@ -102,7 +107,8 @@ export interface CursoAdminDto {
   orden: number;
 }
 
-export type CursoCampos = Omit<CursoAdminDto, "id">;
+/** Body of the create/edit requests: `precioReserva` null means the whole price is paid when booking. */
+export type CursoCampos = Omit<CursoAdminDto, "id" | "precioReserva"> & { precioReserva: number | null };
 
 export interface CursoEditadoDto {
   curso: CursoAdminDto;

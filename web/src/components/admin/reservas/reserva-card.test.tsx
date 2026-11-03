@@ -19,6 +19,7 @@ function reserva(cambios: Partial<ReservaAdminDto> = {}): ReservaAdminDto {
     email: "lucia@example.com",
     telefono: "612345678",
     importe: 149,
+    precioCurso: 149,
     creadaEn: "2026-11-02T10:00:00Z",
     pagadaEn: null,
     expiraEn: "2026-11-03T15:00:00Z",

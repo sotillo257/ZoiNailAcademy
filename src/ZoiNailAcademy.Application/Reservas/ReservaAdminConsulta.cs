@@ -12,12 +12,13 @@ namespace ZoiNailAcademy.Application.Reservas;
 /// </summary>
 public sealed record ReservaAdminFila(
     Guid Id, string Codigo, Guid EdicionId, string Curso, DateTimeOffset Inicio, int Plazas, MetodoPago Metodo,
-    EstadoReserva Estado, string Nombre, string Email, string Telefono, decimal Importe, DateTimeOffset CreadaEn,
-    DateTimeOffset? PagadaEn, DateTimeOffset ExpiraEn, DateTimeOffset? ExpiradaEn, bool RequiereRevision,
+    EstadoReserva Estado, string Nombre, string Email, string Telefono, decimal Importe, decimal PrecioCurso,
+    DateTimeOffset CreadaEn, DateTimeOffset? PagadaEn, DateTimeOffset ExpiraEn, DateTimeOffset? ExpiradaEn, bool RequiereRevision,
     string? NotaInterna, string? StripePaymentIntentId, uint Version)
 {
     public ReservaAdminDto ToDto(bool? plazaDisponible = null) => new(
-        Id, Codigo, EdicionId, Curso, Inicio, Metodo, Estado, Nombre, Email, Telefono, Importe, CreadaEn, PagadaEn,
+        Id, Codigo, EdicionId, Curso, Inicio, Metodo, Estado, Nombre, Email, Telefono, Importe, PrecioCurso, CreadaEn,
+        PagadaEn,
         ExpiraEn, RequiereRevision, NotaInterna, StripePaymentIntentId, Version.ToString(CultureInfo.InvariantCulture),
         plazaDisponible);
 }
@@ -27,7 +28,7 @@ public static class ReservaAdminConsulta
 {
     public static readonly Expression<Func<Reserva, ReservaAdminFila>> Proyeccion = r => new ReservaAdminFila(
         r.Id, r.Codigo, r.EdicionId, r.Edicion.Curso.Nombre, r.Edicion.Inicio, r.Edicion.Plazas, r.Metodo, r.Estado,
-        r.Nombre, r.Email, r.Telefono, r.Importe, r.CreatedAt, r.PagadaEn, r.ExpiraEn, r.ExpiradaEn, r.RequiereRevision,
+        r.Nombre, r.Email, r.Telefono, r.Importe, r.PrecioCurso, r.CreatedAt, r.PagadaEn, r.ExpiraEn, r.ExpiradaEn, r.RequiereRevision,
         r.NotaInterna, r.StripePaymentIntentId, r.Version);
 
     /// <summary>

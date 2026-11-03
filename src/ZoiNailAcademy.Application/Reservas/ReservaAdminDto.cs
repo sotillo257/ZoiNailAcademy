@@ -12,14 +12,15 @@ namespace ZoiNailAcademy.Application.Reservas;
 /// </param>
 public sealed record ReservaAdminDto(
     Guid Id, string Codigo, Guid EdicionId, string Curso, DateTimeOffset Inicio, MetodoPago Metodo, EstadoReserva Estado,
-    string Nombre, string Email, string Telefono, decimal Importe, DateTimeOffset CreadaEn, DateTimeOffset? PagadaEn,
-    DateTimeOffset ExpiraEn, bool RequiereRevision, string? NotaInterna, string? StripePaymentIntentId, string Version,
+    string Nombre, string Email, string Telefono, decimal Importe, decimal PrecioCurso, DateTimeOffset CreadaEn,
+    DateTimeOffset? PagadaEn, DateTimeOffset ExpiraEn, bool RequiereRevision, string? NotaInterna,
+    string? StripePaymentIntentId, string Version,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? PlazaDisponible = null)
 {
     /// <param name="r">Booking with <c>Edicion.Curso</c> loaded.</param>
     public static ReservaAdminDto From(Reserva r) => new(
         r.Id, r.Codigo, r.EdicionId, r.Edicion.Curso.Nombre, r.Edicion.Inicio, r.Metodo, r.Estado, r.Nombre, r.Email,
-        r.Telefono, r.Importe, r.CreatedAt, r.PagadaEn, r.ExpiraEn, r.RequiereRevision, r.NotaInterna,
+        r.Telefono, r.Importe, r.PrecioCurso, r.CreatedAt, r.PagadaEn, r.ExpiraEn, r.RequiereRevision, r.NotaInterna,
         r.StripePaymentIntentId, r.Version.ToString(CultureInfo.InvariantCulture));
 }
 

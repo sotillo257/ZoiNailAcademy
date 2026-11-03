@@ -15,6 +15,7 @@ public class CursoConfiguration : IEntityTypeConfiguration<Curso>
         builder.Property(c => c.DescripcionCorta).IsRequired().HasMaxLength(Curso.DescripcionCortaMaxLength);
         builder.Property(c => c.Descripcion).IsRequired().HasColumnType("text");
         builder.Property(c => c.Precio).HasPrecision(10, 2);
+        builder.Property(c => c.PrecioReserva).HasPrecision(10, 2);
         builder.Property(c => c.Imagen).IsRequired().HasMaxLength(Curso.ImagenMaxLength);
         builder.Property(c => c.Ubicacion).HasMaxLength(Curso.UbicacionMaxLength);
         builder.Property(c => c.DuracionTexto).HasMaxLength(Curso.DuracionTextoMaxLength);

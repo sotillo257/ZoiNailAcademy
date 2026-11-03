@@ -1,6 +1,6 @@
 # Zoi Nail Academy — Web (Next.js)
 
-Front de la web: por ahora solo el **backoffice** (`/admin`, F09). La web pública (F08) vivirá en este mismo proyecto.
+Front de la web: la **web pública** (F08) y el **backoffice** (`/admin`, F09).
 
 ## Stack
 
@@ -45,11 +45,21 @@ Está en `src/lib/admin/session.ts` (revisar a mano, F09):
 - Refresco proactivo un minuto antes de `expiresIn`; logout propagado a las demás pestañas con `BroadcastChannel('auth')`.
 - `/admin/**` sale con `Cache-Control: no-store`, `X-Robots-Tag: noindex` y `robots: noindex`.
 
+## Web pública (F08)
+
+- Diseño aprobado (Figma): tokens `--z-*` en `globals.css` (granate `#8b0b0a`, crema `#f6f2f1`, gris foto `#e8e0de`, verde `#176f3c`) y Montserrat autoalojada (`@fontsource-variable/montserrat` + `next/font/local`, el build no necesita red).
+- **Datos que aporta la clienta:** `src/lib/sitio/datos.ts` (dirección, WhatsApp, email, Instagram, horario, URLs de la academia online y del sistema de citas del spa, mapa, calendario descargable) y `src/lib/sitio/contenido.ts` (fotos y testimonios). Lo que va entre corchetes son los huecos del diseño. Una foto a `null` pinta el hueco gris del diseño; para ponerla, se deja en `public/fotos/` y se escribe su ruta. Mientras una URL externa no está, el enlace lleva a `/contacto`.
+- Rutas: `/` (Inicio), `/formaciones` (calendario, formaciones, opiniones, lista de espera), `/contacto`, `/reservar/[slug]` (paso 1), `/reserva/[codigo]` (paso 2 transferencia/Bizum, vuelta de Stripe, pagada, caducada), `/baja` (avisos de F11), legales, `not-found` y `error`.
+- Las plazas nunca se cachean (`leerApi(..., { fresco: true })`, páginas `force-dynamic`). El formulario de la lista de espera se carga al acercarse a su sección (`lista-espera-diferida.tsx`) para que Formaciones pase de 90 en Lighthouse móvil.
+
 ## Estructura
 
 ```
 src/app/admin/login             Login
 src/app/admin/(panel)/…         Pantallas con sesión (guardia + navegación en components/admin/panel-shell.tsx)
+src/app/(sitio), src/app/(reserva)  Web pública y flujo de reserva (F08)
+src/components/sitio            Componentes de la web pública
+src/lib/sitio                   Cliente de la API pública, esquemas de formularios, errores por code, datos y contenido
 src/components/admin            Componentes del backoffice (tarjeta de reserva, diálogos, formularios)
 src/components/ui               Primitivas (botón, diálogo, pestañas, interruptor…)
 src/lib/admin                   Sesión, errores (ProblemDetails), tipos de la API, descargas

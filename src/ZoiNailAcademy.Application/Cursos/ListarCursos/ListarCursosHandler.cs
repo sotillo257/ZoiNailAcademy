@@ -20,9 +20,13 @@ public class ListarCursosHandler(IAppDbContext dbContext, EdicionesPublicas edic
         var ediciones = await edicionesPublicas.PorCursoAsync(cursos.Select(c => c.Id).ToList(), cancellationToken);
 
         IReadOnlyList<CursoResumenDto> dtos = cursos
-            .Select(c => new CursoResumenDto(
-                c.Id, c.Slug, c.Nombre, c.DescripcionCorta, c.Precio, c.Imagen, c.Orden,
-                ProximaEdicion.De(ediciones.GetValueOrDefault(c.Id) ?? [])))
+            .Select(c =>
+            {
+                var delCurso = ediciones.GetValueOrDefault(c.Id) ?? [];
+                return new CursoResumenDto(
+                    c.Id, c.Slug, c.Nombre, c.DescripcionCorta, c.Precio, c.PrecioReserva, c.Imagen, c.Orden,
+                    c.Ubicacion, c.DuracionTexto, ProximaEdicion.De(delCurso), delCurso);
+            })
             .ToList();
 
         return Result.Success(dtos);

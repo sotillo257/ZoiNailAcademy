@@ -29,6 +29,17 @@ public abstract class CursoCamposValidator<T> : AbstractValidator<T> where T : I
             .GreaterThan(0).WithMessage("El precio debe ser mayor que cero.")
             .PrecisionScale(10, 2, ignoreTrailingZeros: true).WithMessage("El precio admite como máximo 2 decimales.");
 
+        // Null means the whole price is paid when booking.
+        When(x => x.PrecioReserva is not null, () =>
+        {
+            RuleFor(x => x.PrecioReserva)
+                .GreaterThan(0).WithMessage("La reserva de plaza debe ser mayor que cero.")
+                .PrecisionScale(10, 2, ignoreTrailingZeros: true)
+                .WithMessage("La reserva de plaza admite como máximo 2 decimales.")
+                .Must((x, reserva) => reserva <= x.Precio)
+                .WithMessage("La reserva de plaza no puede superar el precio del curso.");
+        });
+
         RuleFor(x => x.Imagen)
             .NotEmpty().WithMessage("La imagen es obligatoria.")
             .MaximumLength(Curso.ImagenMaxLength).WithMessage($"La imagen no puede superar {Curso.ImagenMaxLength} caracteres.");

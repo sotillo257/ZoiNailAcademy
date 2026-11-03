@@ -58,6 +58,21 @@ public class CursosPublicosTests(CustomWebApplicationFactory factory) : Catalogo
     }
 
     [Fact]
+    public async Task ListarCursos_ReturnsTheSeatDepositAndEveryVisibleEdition()
+    {
+        var curso = await CrearCursoEnBdAsync(precioReserva: 30m);
+        var tarde = await CrearEdicionEnBdAsync(curso, Now.AddDays(40));
+        var pronto = await CrearEdicionEnBdAsync(curso, Now.AddDays(4));
+        await CrearEdicionEnBdAsync(curso, Now.AddDays(10), estado: EstadoEdicion.Oculta);
+
+        var cursos = await ReadAsync<List<CursoResumenTestDto>>(await SendAsync(HttpMethod.Get, "/api/cursos"));
+
+        var resumen = cursos.Single(c => c.Id == curso.Id);
+        (resumen.Precio, resumen.PrecioReserva).Should().Be((120m, 30m));
+        resumen.Ediciones.Select(e => e.Id).Should().Equal(pronto.Id, tarde.Id);
+    }
+
+    [Fact]
     public async Task ObtenerCurso_ReturnsDetailWithVisibleEditionsByStart()
     {
         var curso = await CrearCursoEnBdAsync();
@@ -69,7 +84,7 @@ public class CursosPublicosTests(CustomWebApplicationFactory factory) : Catalogo
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var detalle = await ReadAsync<CursoDetalleTestDto>(response);
         detalle.Descripcion.Should().Be("Larga");
-        detalle.Precio.Should().Be(120m);
+        (detalle.Precio, detalle.PrecioReserva).Should().Be((120m, 120m));
         detalle.Ediciones.Select(e => e.Id).Should().Equal(pronto.Id, tarde.Id);
         detalle.ProximaEdicion!.Id.Should().Be(pronto.Id);
     }

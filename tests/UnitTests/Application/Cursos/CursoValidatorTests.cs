@@ -44,6 +44,31 @@ public class CursoValidatorTests
             ["Nombre", "DescripcionCorta", "Imagen", "Ubicacion", "DuracionTexto", "Orden", "Precio"]);
     }
 
+    [Theory]
+    [InlineData("0")]
+    [InlineData("150")]
+    [InlineData("10.001")]
+    public void Validate_InvalidSeatDeposit_FailsOnPrecioReserva(string precioReserva)
+    {
+        var result = _crear.Validate(Valid() with { PrecioReserva = Decimal(precioReserva) });
+
+        result.Errors.Select(e => e.PropertyName).Should().Equal("PrecioReserva");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("30.5")]
+    [InlineData("149.99")]
+    public void Validate_SeatDepositUpToThePrice_IsValid(string? precioReserva)
+    {
+        var result = _crear.Validate(Valid() with { PrecioReserva = precioReserva is null ? null : Decimal(precioReserva) });
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    private static decimal Decimal(string valor) =>
+        decimal.Parse(valor, System.Globalization.CultureInfo.InvariantCulture);
+
     [Fact]
     public void Validate_EditCommand_UsesTheSameRules()
     {

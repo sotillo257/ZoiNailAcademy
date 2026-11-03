@@ -60,9 +60,9 @@ public abstract class ReservasTestBase(CustomWebApplicationFactory factory) : Ca
         return await ReadAsync<ReservaTarjetaTestDto>(response);
     }
 
-    protected async Task<Edicion> CrearEdicionReservableAsync(int plazas = 10, decimal? precio = null)
+    protected async Task<Edicion> CrearEdicionReservableAsync(int plazas = 10, decimal? precioReserva = null)
     {
-        var curso = await CrearCursoEnBdAsync();
+        var curso = await CrearCursoEnBdAsync(precioReserva: precioReserva);
         return await CrearEdicionEnBdAsync(curso, Now.AddDays(20), plazas);
     }
 
@@ -130,11 +130,11 @@ public record DatosPagoTestDto(string Titular, string Iban, string BizumTelefono
 
 public record ReservaPublicaTestDto(
     string Codigo, string Estado, string Metodo, string Curso, DateTimeOffset Inicio, decimal Importe,
-    DateTimeOffset? ExpiraEn, DatosPagoTestDto? DatosPago, string? WhatsappUrl);
+    decimal PrecioCurso, DateTimeOffset? ExpiraEn, DatosPagoTestDto? DatosPago, string? WhatsappUrl);
 
 public record ReservaAdminTestDto(
     Guid Id, string Codigo, Guid EdicionId, string Curso, DateTimeOffset Inicio, string Metodo, string Estado,
-    string Nombre, string Email, string Telefono, decimal Importe, DateTimeOffset CreadaEn, DateTimeOffset? PagadaEn,
+    string Nombre, string Email, string Telefono, decimal Importe, decimal PrecioCurso, DateTimeOffset CreadaEn, DateTimeOffset? PagadaEn,
     DateTimeOffset ExpiraEn, bool RequiereRevision, string? NotaInterna, string? StripePaymentIntentId, string Version,
     bool? PlazaDisponible = null);
 

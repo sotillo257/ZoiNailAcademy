@@ -21,6 +21,7 @@ const VACIO: CursoCampos = {
   descripcionCorta: "",
   descripcion: "",
   precio: 0,
+  precioReserva: null,
   imagen: "",
   ubicacion: null,
   duracionTexto: null,
@@ -45,6 +46,10 @@ export function CursoForm({ curso }: { curso?: CursoAdminDto }) {
   const router = useRouter();
   const [valores, setValores] = React.useState<CursoCampos>(curso ?? VACIO);
   const [precio, setPrecio] = React.useState(curso ? String(curso.precio) : "");
+  // Empty = the whole price is paid when booking.
+  const [precioReserva, setPrecioReserva] = React.useState(
+    curso && curso.precioReserva < curso.precio ? String(curso.precioReserva) : "",
+  );
   const [slugTocado, setSlugTocado] = React.useState(Boolean(curso));
   const [errores, setErrores] = React.useState<Errores>({});
   const [enviando, setEnviando] = React.useState(false);
@@ -56,11 +61,14 @@ export function CursoForm({ curso }: { curso?: CursoAdminDto }) {
     e.preventDefault();
     if (enviando) return;
     const numPrecio = Number(precio.replace(",", "."));
+    const numReserva = precioReserva.trim() ? Number(precioReserva.replace(",", ".")) : null;
     const nuevos: Errores = {};
     if (!valores.nombre.trim()) nuevos.nombre = "El nombre es obligatorio.";
     if (!SLUG.test(valores.slug)) nuevos.slug = "Solo minúsculas, números y guiones (p. ej. 'acrilico-avanzado').";
     if (!valores.descripcionCorta.trim()) nuevos.descripcionCorta = "La descripción corta es obligatoria.";
     if (!(numPrecio > 0)) nuevos.precio = "El precio debe ser mayor que cero.";
+    if (numReserva !== null && !(numReserva > 0 && numReserva <= numPrecio))
+      nuevos.precioReserva = "La reserva de plaza debe ser mayor que cero y no superar el precio.";
     if (!valores.imagen.trim()) nuevos.imagen = "La imagen es obligatoria.";
     if (!Number.isInteger(valores.orden) || valores.orden < 0) nuevos.orden = "El orden no puede ser negativo.";
     setErrores(nuevos);
@@ -69,6 +77,7 @@ export function CursoForm({ curso }: { curso?: CursoAdminDto }) {
     const body: CursoCampos = {
       ...valores,
       precio: numPrecio,
+      precioReserva: numReserva,
       nombre: valores.nombre.trim(),
       descripcionCorta: valores.descripcionCorta.trim(),
       imagen: valores.imagen.trim(),
@@ -178,10 +187,23 @@ export function CursoForm({ curso }: { curso?: CursoAdminDto }) {
         {errores.descripcion ? <p className="text-sm text-destructive">{errores.descripcion}</p> : null}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Campo id="precio" label="Precio (€)" error={errores.precio}>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Campo id="precio" label="Precio total (€)" error={errores.precio}>
           {(p) => <Input {...p} inputMode="decimal" value={precio} onChange={(e) => setPrecio(e.target.value)} placeholder="149,00" />}
         </Campo>
+        <Campo
+          id="precioReserva"
+          label="Reserva de plaza (€)"
+          error={errores.precioReserva}
+          ayuda="Lo que se paga al reservar; el resto, en persona. Vacío = se paga el precio total."
+        >
+          {(p) => (
+            <Input {...p} inputMode="decimal" value={precioReserva} onChange={(e) => setPrecioReserva(e.target.value)} placeholder="50,00" />
+          )}
+        </Campo>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
         <Campo id="orden" label="Orden" error={errores.orden} ayuda="Menor sale antes.">
           {(p) => (
             <Input {...p} type="number" inputMode="numeric" min={0} value={valores.orden} onChange={(e) => set("orden", Number(e.target.value))} />

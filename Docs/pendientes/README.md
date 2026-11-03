@@ -2,15 +2,20 @@
 
 Lo que falta para terminar y poner en producción la API. Al cerrar un punto, márcalo aquí y también en el `tasks.md` del cambio de OpenSpec correspondiente (si viene de ahí).
 
-Última revisión: 03/11/2026, tras implementar F09 (backoffice en `web/`).
+Última revisión: 03/11/2026, tras implementar F08 (web pública) y F12 (señal de reserva).
 
 ## 1. Otras features
 
-- [ ] **F08 – front público:** página `/baja?token=&curso=`. Pide confirmación con el botón "Darme de baja de los avisos", llama a `POST /api/lista-espera/baja` con `{ token }` y muestra "Ya no te avisaremos de nuevas fechas de {curso}" (el nombre se saca del slug con `GET /api/cursos/{slug}`). Nunca debe dar de baja con un simple `GET`. Hay que bloquear `/baja` en `robots.ts`.
+- [x] **F08 – front público:** página `/baja?token=&curso=` (confirma con botón y `POST`, bloqueada en `robots.ts`).
+- [ ] **F08:** ajustar Formaciones presenciales con la exportación en alta resolución del Figma (textos de la cabecera, ventajas, subtítulos, chips y testimonios están escritos por mí: la captura recibida no se leía).
+- [ ] **F08 – contenido de la clienta:** rellenar `web/src/lib/sitio/datos.ts` (dirección, WhatsApp, email, Instagram, horario, URL de la academia online, del spa y de reserva de citas, mapa, calendario descargable) y `web/src/lib/sitio/contenido.ts` (fotos en `web/public/fotos/` y testimonios). Mientras falten, se ven los huecos del diseño.
+- [ ] **F08 – textos legales:** `/aviso-legal`, `/privacidad`, `/cookies`, `/condiciones` llevan textos provisionales marcados `[PENDIENTE]`.
+- [ ] **F08:** `NEXT_PUBLIC_SITE_URL` en el build de producción (canónicas y sitemap; sin ella Lighthouse SEO da 92).
+- [ ] **F12 – señal:** importe real de "Reserva de plaza" de cada curso (`cursos.json` lleva 30 € provisionales) y prueba en Stripe test de un pago con señal (importe y concepto en la página de Checkout).
 - [x] **F09 – front del backoffice:** la pantalla de editar curso (solo SuperAdmin) carga los datos con `GET /api/admin/cursos/{id}` (`CursoAdminDto`) y guarda con `PUT`.
 - [x] **F09 – front del backoffice:** indicador "Se dio de baja de avisos" en la tarjeta de la lista de espera, con el campo `baja` de `ListaEsperaAdminDto`.
 - [ ] **F08/F09:** regenerar los tipos TypeScript del front desde Swagger (`cd web && npm run api:types`, tarea manual, F02 9.2). Los DTOs del backoffice están escritos a mano en `web/src/lib/admin/types.ts`: compararlos con el `schema.d.ts` generado.
-- [ ] **F09:** el front está en `web/` (Next.js) y por ahora solo tiene el backoffice; la web pública (F08) se añade en el mismo proyecto. Falta su `Dockerfile` y el servicio en Railway (F10).
+- [ ] **F08/F09:** el front (`web/`, web pública + backoffice) necesita su `Dockerfile` y el servicio en Railway (F10).
 - [ ] **F10 – infraestructura:** desplegar en Railway, dominio y DNS, Stripe, CI, variables y checklist de producción.
 
 ## 2. Configuración en producción (Railway)

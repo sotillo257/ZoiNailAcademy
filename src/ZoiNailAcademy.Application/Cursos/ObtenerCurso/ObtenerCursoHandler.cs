@@ -21,7 +21,8 @@ public class ObtenerCursoHandler(IAppDbContext dbContext, EdicionesPublicas edic
             .GetValueOrDefault(curso.Id) ?? [];
 
         return Result.Success(new CursoDetalleDto(
-            curso.Id, curso.Slug, curso.Nombre, curso.DescripcionCorta, curso.Precio, curso.Imagen, curso.Orden,
-            ProximaEdicion.De(ediciones), curso.Descripcion, ediciones));
+            curso.Id, curso.Slug, curso.Nombre, curso.DescripcionCorta, curso.Precio, curso.PrecioReserva, curso.Imagen,
+            curso.Orden, curso.Ubicacion, curso.DuracionTexto, ProximaEdicion.De(ediciones), curso.Descripcion,
+            ediciones));
     }
 }

@@ -18,6 +18,7 @@ public class ReservaConfiguration : IEntityTypeConfiguration<Reserva>
         builder.Property(r => r.Email).IsRequired().HasMaxLength(Reserva.EmailMaxLength);
         builder.Property(r => r.Telefono).IsRequired().HasMaxLength(Reserva.TelefonoMaxLength);
         builder.Property(r => r.Importe).HasPrecision(10, 2);
+        builder.Property(r => r.PrecioCurso).HasPrecision(10, 2);
         builder.Property(r => r.StripeSessionId).HasMaxLength(Reserva.StripeIdMaxLength);
         builder.Property(r => r.StripePaymentIntentId).HasMaxLength(Reserva.StripeIdMaxLength);
         builder.Property(r => r.NotaInterna).HasMaxLength(Reserva.NotaInternaMaxLength);

@@ -6,15 +6,22 @@ namespace ZoiNailAcademy.Application.Emails.Plantillas;
 /// <summary>Booking data the templates show.</summary>
 public sealed record ReservaEmailModelo(
     Guid ReservaId, Guid EdicionId, string Codigo, string Curso, string CursoSlug, DateTimeOffset Inicio,
-    string? Ubicacion, decimal Importe, MetodoPago Metodo, string Nombre, string Email, string Telefono,
-    DateTimeOffset ExpiraEn, string? StripePaymentIntentId)
+    string? Ubicacion, decimal Importe, decimal PrecioCurso, MetodoPago Metodo, string Nombre, string Email,
+    string Telefono, DateTimeOffset ExpiraEn, string? StripePaymentIntentId)
 {
     /// <param name="r">Booking with <c>Edicion.Curso</c> loaded.</param>
     public static ReservaEmailModelo From(Reserva r) => new(
         r.Id, r.EdicionId, r.Codigo, r.Edicion.Curso.Nombre, r.Edicion.Curso.Slug, r.Edicion.Inicio,
-        r.Edicion.Curso.Ubicacion, r.Importe, r.Metodo, r.Nombre, r.Email, r.Telefono, r.ExpiraEn, r.StripePaymentIntentId);
+        r.Edicion.Curso.Ubicacion, r.Importe, r.PrecioCurso, r.Metodo, r.Nombre, r.Email, r.Telefono, r.ExpiraEn,
+        r.StripePaymentIntentId);
 
     public string MetodoTexto => Metodo == MetodoPago.Stripe ? "Tarjeta" : "Transferencia o Bizum";
+
+    /// <summary>Label of <see cref="Importe"/>: a seat deposit when part of the price is paid in person.</summary>
+    public string ImporteEtiqueta => PrecioCurso > Importe ? "Reserva de plaza" : "Importe";
+
+    /// <summary>What is paid in person, formatted; null when the whole price is paid online (the row is hidden).</summary>
+    public string? RestoTexto => PrecioCurso > Importe ? EmailFormato.Importe(PrecioCurso - Importe) : null;
 }
 
 public sealed record DatosPagoEmail(string Titular, string Iban, string BizumTelefono, string WhatsappUrl);

@@ -16,7 +16,7 @@ public class PlantillasEmailTests
 
     private static ReservaEmailModelo Reserva(string nombre = "Lucía Pérez", MetodoPago metodo = MetodoPago.Stripe) => new(
         Guid.NewGuid(), Guid.Parse("11111111-1111-1111-1111-111111111111"), "CUR-7KQ4XM", "Acrílico", "acrilico", Inicio,
-        "Calle Mayor 1", 149m, metodo, nombre, "lucia@mail.com", "+34612345678",
+        "Calle Mayor 1", 149m, 149m, metodo, nombre, "lucia@mail.com", "+34612345678",
         new DateTimeOffset(2026, 12, 1, 18, 30, 0, TimeSpan.Zero), "pi_123");
 
     private static readonly DatosPagoEmail Pago = new("Zoi Nail Academy", "ES12 3456", "600111222", "https://wa.me/34600111222?text=Hola");
@@ -66,6 +66,33 @@ public class PlantillasEmailTests
         {
             email.Html.Should().Contain("&lt;script&gt;");
         }
+    }
+
+    [Theory]
+    [MemberData(nameof(PlantillasDeReserva))]
+    public void Reserva_WithSeatDeposit_ShowsTheDepositAndWhatIsPaidInPerson(
+        string asunto, Func<ReservaEmailModelo, EmailContenido> plantilla)
+    {
+        if (asunto.StartsWith("Tu reserva ha caducado", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var email = plantilla(Reserva() with { Importe = 50m });
+
+        foreach (var version in new[] { email.Html, email.Texto })
+        {
+            version.Should().Contain("Reserva de plaza").And.Contain("50,00 €");
+            version.Should().Contain("Resto a pagar en persona").And.Contain("99,00 €");
+        }
+    }
+
+    [Fact]
+    public void Reserva_WholePricePaid_HasNoInPersonRow()
+    {
+        var email = ReservaPagadaCompradorEmail.Crear(Reserva(), Marca);
+
+        email.Texto.Should().Contain("Importe: 149,00 €").And.NotContain("Resto a pagar");
     }
 
     [Fact]

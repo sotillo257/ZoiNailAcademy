@@ -16,11 +16,12 @@ public abstract class CatalogoTestBase(CustomWebApplicationFactory factory) : In
 
     protected static string UniqueSlug() => $"curso-{Guid.NewGuid():N}";
 
-    protected async Task<Curso> CrearCursoEnBdAsync(bool activo = true, int orden = 500)
+    protected async Task<Curso> CrearCursoEnBdAsync(bool activo = true, int orden = 500, decimal? precioReserva = null)
     {
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var curso = Curso.Create("Curso de test", UniqueSlug(), "Corta", "Larga", 120m, "/cursos/test.jpg", null, null, true, orden);
+        var curso = Curso.Create(
+            "Curso de test", UniqueSlug(), "Corta", "Larga", 120m, "/cursos/test.jpg", null, null, true, orden, precioReserva);
         db.Cursos.Add(curso);
         if (!activo)
         {
@@ -105,12 +106,12 @@ public abstract class CatalogoTestBase(CustomWebApplicationFactory factory) : In
 public record EdicionPublicaTestDto(Guid Id, DateTimeOffset Inicio, int PlazasTotales, int PlazasLibres, string Estado);
 
 public record CursoResumenTestDto(
-    Guid Id, string Slug, string Nombre, string DescripcionCorta, decimal Precio, string Imagen, int Orden,
-    EdicionPublicaTestDto? ProximaEdicion);
+    Guid Id, string Slug, string Nombre, string DescripcionCorta, decimal Precio, decimal PrecioReserva, string Imagen,
+    int Orden, EdicionPublicaTestDto? ProximaEdicion, List<EdicionPublicaTestDto> Ediciones);
 
 public record CursoDetalleTestDto(
-    Guid Id, string Slug, string Nombre, decimal Precio, EdicionPublicaTestDto? ProximaEdicion, string Descripcion,
-    List<EdicionPublicaTestDto> Ediciones);
+    Guid Id, string Slug, string Nombre, decimal Precio, decimal PrecioReserva, EdicionPublicaTestDto? ProximaEdicion,
+    string Descripcion, List<EdicionPublicaTestDto> Ediciones);
 
 public record EdicionAdminTestDto(
     Guid Id, Guid CursoId, string Curso, DateTimeOffset Inicio, int Plazas, int Pagadas, int Pendientes, int Libres,
@@ -122,6 +123,6 @@ public record CursoOpcionTestDto(Guid Id, string Nombre, string Slug, bool Activ
 
 public record CursoAdminTestDto(
     Guid Id, string Nombre, string Slug, string DescripcionCorta, string Descripcion, decimal Precio, string Imagen,
-    string? Ubicacion, string? DuracionTexto, bool Activo, int Orden);
+    string? Ubicacion, string? DuracionTexto, bool Activo, int Orden, decimal PrecioReserva);
 
 public record CursoEditadoTestDto(CursoAdminTestDto Curso, List<string> Avisos);
