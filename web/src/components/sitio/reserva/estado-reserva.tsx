@@ -145,14 +145,13 @@ function InstruccionesPago({ reserva }: { reserva: ReservaPublicaDto }) {
               Pulsa el botón y se abrirá WhatsApp con un mensaje ya escrito. Solo tienes que adjuntar la captura del pago.
             </p>
             <ul className="mb-6 mt-4 hidden space-y-2.5 text-[13px] text-z-text md:block">
+              {/* The code itself is shown once, in "Concepto" (the e2e looks for it as a single element). */}
               {[
-                <>
-                  El mensaje ya lleva tu código <strong className="text-z-ink">{reserva.codigo}</strong>
-                </>,
+                "El mensaje ya lleva tu código de reserva",
                 "Adjunta la captura o el justificante del pago",
                 "Te confirmamos la plaza por WhatsApp y email",
-              ].map((texto, i) => (
-                <li key={i} className="flex gap-2">
+              ].map((texto) => (
+                <li key={texto} className="flex gap-2">
                   <CheckCircle2Icon className="mt-px size-4 shrink-0 text-z-green" aria-hidden />
                   <span>{texto}</span>
                 </li>
