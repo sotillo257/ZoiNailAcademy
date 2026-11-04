@@ -119,7 +119,7 @@ export function ReservaForm({
 
   if (reservables.length === 0) {
     return (
-      <Tarjeta className="text-center">
+      <Tarjeta className="text-center md:px-10 md:py-10">
         <p className="text-base font-bold">No hay fechas abiertas ahora mismo</p>
         <p className="mt-2 text-sm text-z-text">Apúntate a la lista de espera y te avisamos en cuanto haya nuevas fechas de {curso.nombre}.</p>
         <BotonLink href={listaEsperaHref} ancho className="mt-5">
@@ -130,8 +130,8 @@ export function ReservaForm({
   }
 
   return (
-    <Tarjeta>
-      <form onSubmit={enviar} noValidate className="relative space-y-4">
+    <Tarjeta className="md:p-7 lg:p-8">
+      <form onSubmit={enviar} noValidate className="relative space-y-4 md:space-y-5">
         {avisoAbandono ? (
           <div role="status" className="flex gap-2 rounded-md bg-z-amber-soft px-4 py-3 text-sm text-z-amber">
             <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -161,16 +161,18 @@ export function ReservaForm({
         <Campo id="reserva-nombre" label="Nombre y apellidos" error={errors.nombre?.message}>
           {(p) => <input {...p} {...register("nombre")} autoComplete="name" className={`${claseControl} h-12`} />}
         </Campo>
-        <Campo id="reserva-telefono" label="WhatsApp" error={errors.telefono?.message}>
-          {(p) => <input {...p} {...register("telefono")} type="tel" autoComplete="tel" inputMode="tel" placeholder="612 345 678" className={`${claseControl} h-12`} />}
-        </Campo>
-        <Campo id="reserva-email" label="Email" error={errors.email?.message}>
-          {(p) => <input {...p} {...register("email")} type="email" autoComplete="email" inputMode="email" className={`${claseControl} h-12`} />}
-        </Campo>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+          <Campo id="reserva-telefono" label="WhatsApp" error={errors.telefono?.message}>
+            {(p) => <input {...p} {...register("telefono")} type="tel" autoComplete="tel" inputMode="tel" placeholder="612 345 678" className={`${claseControl} h-12`} />}
+          </Campo>
+          <Campo id="reserva-email" label="Email" error={errors.email?.message}>
+            {(p) => <input {...p} {...register("email")} type="email" autoComplete="email" inputMode="email" className={`${claseControl} h-12`} />}
+          </Campo>
+        </div>
 
         <fieldset>
           <legend className="mb-2.5 text-sm font-bold">¿Cómo quieres pagar la reserva?</legend>
-          <div className="space-y-2.5">
+          <div className="grid gap-2.5 md:grid-cols-2 md:gap-3">
             {METODOS.map((m) => {
               const elegido = metodo === m.valor;
               return (
@@ -218,7 +220,7 @@ export function ReservaForm({
           </AvisoError>
         ) : null}
 
-        <Boton type="submit" ancho disabled={ocupado} aria-busy={ocupado} className="h-12 text-sm">
+        <Boton type="submit" ancho disabled={ocupado} aria-busy={ocupado} className="h-12 text-sm md:h-[52px]">
           {ocupado ? <Loader2Icon className="size-4 animate-spin" aria-hidden /> : null}
           {redirigiendo && metodo === "Stripe" ? "Abriendo el pago…" : "Continuar"}
         </Boton>

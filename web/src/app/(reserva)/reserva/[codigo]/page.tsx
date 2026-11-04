@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BarraReserva } from "@/components/sitio/reserva/barra";
+import { ANCHO_RESERVA, BarraReserva } from "@/components/sitio/reserva/barra";
 import { EstadoReserva } from "@/components/sitio/reserva/estado-reserva";
 import { type ReservaPublicaDto, leerApi } from "@/lib/sitio/api";
 
@@ -22,7 +22,7 @@ export default async function ReservaPage({ params, searchParams }: Props) {
   return (
     <>
       <BarraReserva volver="/formaciones" titulo={reserva.estado === "Pagada" ? "Tu reserva" : "Reserva tu plaza"} />
-      <main className="mx-auto max-w-[480px] px-[18px] pb-10 pt-5">
+      <main className={`${ANCHO_RESERVA} pb-10 pt-5 md:pt-8 lg:pb-16 lg:pt-10`}>
         <EstadoReserva inicial={reserva} desdeStripe={origen === "stripe"} />
       </main>
     </>
