@@ -106,13 +106,14 @@ export default function InicioPage() {
               className="mx-auto size-32 rounded-full p-2 max-md:[&>span:nth-of-type(2)]:hidden md:order-2 md:size-auto md:h-[496px] md:w-full md:rounded-lg md:p-4"
             />
             <div className="text-center md:order-1 md:text-left">
-              <h1 className="text-[31px] font-bold leading-[1.15] md:text-[52px] md:leading-[1.08]">
+              {/* Phone: one line always; the size follows the width left by the 18px gutters (text ≈ 12.5em wide) */}
+              <h1 className="whitespace-nowrap text-[clamp(18px,calc(8vw-3px),31px)] font-bold leading-[1.15] md:whitespace-normal md:text-[52px] md:leading-[1.08]">
                 Hola, Soy Zoila Buzetta
               </h1>
-              <p className="mt-3 text-[15px] font-bold leading-snug text-z-burgundy md:mt-8 md:text-[22px] md:leading-[1.4]">
+              <p className="mt-3 text-[clamp(13px,3.9vw,15px)] font-bold leading-snug text-z-burgundy md:mt-8 md:text-[22px] md:leading-[1.4]">
                 17 años haciendo uñas, +5.000 alumnas formadas y Campeona Internacional
               </p>
-              <p className="mt-3 text-sm leading-relaxed text-z-text md:hidden">
+              <p className="mt-3 text-[clamp(12.5px,3.6vw,14px)] leading-relaxed text-z-text md:hidden">
                 Cuido a mis clientas en mi spa y formo a manicuristas con técnicas reales y rentables.
               </p>
               <p className="mt-5 hidden text-base leading-[1.7] text-z-text md:block">
