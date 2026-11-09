@@ -102,7 +102,8 @@ export default function InicioPage() {
               nota="la misma línea que la portada de la academia"
               icono
               prioridad
-              className="aspect-[354/298] w-full md:order-2 md:aspect-auto md:h-[496px]"
+              sizes="(min-width: 768px) 50vw, 128px"
+              className="mx-auto size-32 rounded-full p-2 max-md:[&>span:nth-of-type(2)]:hidden md:order-2 md:size-auto md:h-[496px] md:w-full md:rounded-lg md:p-4"
             />
             <div className="text-center md:order-1 md:text-left">
               <h1 className="text-[31px] font-bold leading-[1.15] md:text-[52px] md:leading-[1.08]">
