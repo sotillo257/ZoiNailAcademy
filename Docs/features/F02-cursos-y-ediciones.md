@@ -43,6 +43,8 @@ Modelar cursos y ediciones, exponerlos a la web pública con sus plazas libres, 
 | --- | --- | --- |
 | `Id` | Guid | PK |
 | `CursoId` | Guid | FK, `OnDelete: Restrict` |
+| `Precio` | decimal(10,2) | > 0. Precio de esta edición. Por defecto, el del curso al crearla; editable |
+| `PrecioReserva` | decimal(10,2) | > 0 y ≤ `Precio`. Señal de esta edición. Por defecto, la del curso (tope `Precio`); editable |
 | `Inicio` | DateTimeOffset | UTC |
 | `Plazas` | int | 1–200 |
 | `Estado` | enum | `Programada`, `Oculta`, `Cancelada` (string) |
@@ -85,6 +87,8 @@ libres   = max(0, Plazas - ocupadas)
 ### CRUD de cursos (SuperAdmin)
 - `Slug` único; si se cambia, avisar en la respuesta (rompe URLs y SEO).
 - **Borrar** = desactivar (`Activo = false`). Si tiene ediciones futuras `Programada` → 409 `curso_con_ediciones`.
+- Cambiar el precio del curso **no** cambia las ediciones ya creadas: cada edición guarda su propio precio y su señal.
+- El precio de una edición se puede cambiar mientras no haya empezado ni esté cancelada (como las plazas).
 - El precio cambiado no afecta a reservas ya creadas (la reserva guarda su `Importe`).
 
 ## Endpoints
@@ -114,9 +118,9 @@ Orden: próximas primero; pasadas al final si `incluirPasadas=true`.
 
 `GET /api/admin/ediciones/{id}` → `EdicionAdminDto`.
 
-`POST /api/admin/ediciones` body `{cursoId, inicio, plazas, estado?, notas?}` → 201 `EdicionAdminDto`.
+`POST /api/admin/ediciones` body `{cursoId, inicio, plazas, estado?, notas?, precio?, precioReserva?}` → 201 `EdicionAdminDto`. Si no se envían precios, se copian los del curso.
 
-`PUT /api/admin/ediciones/{id}` body `{inicio, plazas, estado, notas?, version, confirmarCambioFecha?}` → 200 `{edicion: EdicionAdminDto, avisos: string[]}`.
+`PUT /api/admin/ediciones/{id}` body `{inicio, plazas, estado, notas?, version, confirmarCambioFecha?, precio?, precioReserva?}` → 200 `{edicion: EdicionAdminDto, avisos: string[]}`.
 
 `DELETE /api/admin/ediciones/{id}` → 204.
 

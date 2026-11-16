@@ -13,7 +13,7 @@ public class ListarCursosAdminHandler(IAppDbContext dbContext)
         IReadOnlyList<CursoOpcionDto> cursos = await dbContext.Cursos
             .AsNoTracking()
             .OrderBy(c => c.Orden).ThenBy(c => c.Nombre)
-            .Select(c => new CursoOpcionDto(c.Id, c.Nombre, c.Slug, c.Activo))
+            .Select(c => new CursoOpcionDto(c.Id, c.Nombre, c.Slug, c.Activo, c.Precio, c.PrecioReserva))
             .ToListAsync(cancellationToken);
 
         return Result.Success(cursos);

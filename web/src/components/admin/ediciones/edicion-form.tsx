@@ -12,7 +12,7 @@ import { isApiError, mensajeError, SessionExpiredError } from "@/lib/admin/error
 import { LIMITES, type CursoOpcionDto, type EdicionAdminDto, type EdicionEditadaDto } from "@/lib/admin/types";
 import { HoraInexistenteError, isoAMadrid, madridAIso } from "@/lib/fechas";
 
-type Campos = "cursoId" | "fecha" | "hora" | "plazas" | "estado" | "notas";
+type Campos = "cursoId" | "fecha" | "hora" | "plazas" | "estado" | "notas" | "precio" | "precioReserva";
 type Errores = Partial<Record<Campos, string>>;
 
 /** Maps the API's validation fields (PascalCase) to the form's. */
@@ -22,7 +22,12 @@ const CAMPO_API: Record<string, Campos> = {
   plazas: "plazas",
   estado: "estado",
   notas: "notas",
+  precio: "precio",
+  precioreserva: "precioReserva",
 };
+
+/** Money as typed (comma or dot); empty or invalid becomes NaN and fails validation. */
+const numeroEuros = (texto: string) => Number(texto.trim().replace(",", "."));
 
 export function EdicionForm({
   cursos,
@@ -42,6 +47,10 @@ export function EdicionForm({
   const [fecha, setFecha] = React.useState(inicial.fecha);
   const [hora, setHora] = React.useState(inicial.hora);
   const [plazas, setPlazas] = React.useState(String(edicion?.plazas ?? 8));
+  // A new edition starts with its course's prices; the client can change them.
+  const cursoInicial = cursos.find((c) => c.id === cursoId);
+  const [precio, setPrecio] = React.useState(String(edicion?.precio ?? cursoInicial?.precio ?? ""));
+  const [precioReserva, setPrecioReserva] = React.useState(String(edicion?.precioReserva ?? cursoInicial?.precioReserva ?? ""));
   const [estado, setEstado] = React.useState(edicion?.estado ?? "Programada");
   const [notas, setNotas] = React.useState(edicion?.notas ?? "");
   const [errores, setErrores] = React.useState<Errores>({});
@@ -61,6 +70,12 @@ export function EdicionForm({
     const numPlazas = Number(plazas);
     if (!Number.isInteger(numPlazas) || numPlazas < LIMITES.plazasMinimas || numPlazas > LIMITES.plazasMaximas) {
       nuevosErrores.plazas = `Las plazas deben estar entre ${LIMITES.plazasMinimas} y ${LIMITES.plazasMaximas}.`;
+    }
+    const numPrecio = numeroEuros(precio);
+    const numReserva = numeroEuros(precioReserva);
+    if (!(numPrecio > 0)) nuevosErrores.precio = "El precio debe ser mayor que cero.";
+    if (!(numReserva > 0 && numReserva <= numPrecio)) {
+      nuevosErrores.precioReserva = "La reserva de plaza debe ser mayor que cero y no superar el precio.";
     }
 
     let inicio = "";
@@ -85,7 +100,16 @@ export function EdicionForm({
       if (edicion) {
         const resultado = await session.json<EdicionEditadaDto>(`/api/admin/ediciones/${edicion.id}`, {
           method: "PUT",
-          body: JSON.stringify({ inicio, plazas: numPlazas, estado, notas: notas.trim() || null, version: edicion.version, confirmarCambioFecha }),
+          body: JSON.stringify({
+            inicio,
+            plazas: numPlazas,
+            estado,
+            notas: notas.trim() || null,
+            version: edicion.version,
+            confirmarCambioFecha,
+            precio: numPrecio,
+            precioReserva: numReserva,
+          }),
         });
         toast.success("Fecha guardada");
         for (const aviso of resultado.avisos) toast.info(aviso);
@@ -93,7 +117,15 @@ export function EdicionForm({
       } else {
         const creada = await session.json<EdicionAdminDto>("/api/admin/ediciones", {
           method: "POST",
-          body: JSON.stringify({ cursoId, inicio, plazas: numPlazas, estado, notas: notas.trim() || null }),
+          body: JSON.stringify({
+            cursoId,
+            inicio,
+            plazas: numPlazas,
+            estado,
+            notas: notas.trim() || null,
+            precio: numPrecio,
+            precioReserva: numReserva,
+          }),
         });
         toast.success(estado === "Programada" ? "Fecha creada y publicada" : "Fecha creada (oculta)");
         router.push(`/admin/ediciones/${creada.id}`);
@@ -150,7 +182,20 @@ export function EdicionForm({
 
       <Campo id="cursoId" label="Curso" error={errores.cursoId}>
         {(props) => (
-          <NativeSelect {...props} value={cursoId} onChange={(e) => setCursoId(e.target.value)} disabled={Boolean(edicion)}>
+          <NativeSelect
+            {...props}
+            value={cursoId}
+            onChange={(e) => {
+              setCursoId(e.target.value);
+              // Prices follow the chosen course; the client can then edit them.
+              const elegido = cursos.find((c) => c.id === e.target.value);
+              if (elegido) {
+                setPrecio(String(elegido.precio));
+                setPrecioReserva(String(elegido.precioReserva));
+              }
+            }}
+            disabled={Boolean(edicion)}
+          >
             <option value="">Elige un curso…</option>
             {opcionesCurso.map((c) => (
               <option key={c.id} value={c.id}>
@@ -197,6 +242,31 @@ export function EdicionForm({
               <option value="Oculta">Oculta</option>
               {estado === "Cancelada" ? <option value="Cancelada">Cancelada</option> : null}
             </NativeSelect>
+          )}
+        </Campo>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Campo id="precio" label="Precio total (€)" error={errores.precio} ayuda="Por defecto, el del curso.">
+          {(props) => (
+            <Input
+              {...props}
+              inputMode="decimal"
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              disabled={soloNotas}
+            />
+          )}
+        </Campo>
+        <Campo id="precioReserva" label="Reserva de plaza (€)" error={errores.precioReserva} ayuda="Lo que se paga online al reservar.">
+          {(props) => (
+            <Input
+              {...props}
+              inputMode="decimal"
+              value={precioReserva}
+              onChange={(e) => setPrecioReserva(e.target.value)}
+              disabled={soloNotas}
+            />
           )}
         </Campo>
       </div>

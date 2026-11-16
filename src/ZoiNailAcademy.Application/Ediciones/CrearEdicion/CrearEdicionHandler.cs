@@ -22,7 +22,8 @@ public class CrearEdicionHandler(
 
         var now = timeProvider.GetUtcNow();
         var edicion = Edicion.Create(
-            curso, request.Inicio, request.Plazas, request.Estado ?? EstadoEdicion.Programada, request.Notas, now);
+            curso, request.Inicio, request.Plazas, request.Estado ?? EstadoEdicion.Programada, request.Notas, now,
+            request.Precio, request.PrecioReserva);
 
         dbContext.Ediciones.Add(edicion);
         await dbContext.SaveChangesAsync(cancellationToken);

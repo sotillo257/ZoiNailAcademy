@@ -35,7 +35,7 @@ Que el comprador elija una edición, pague con tarjeta en Stripe Checkout y qued
 | `Nombre` | string(120) | Obligatorio |
 | `Email` | string(200) | Obligatorio, normalizado a minúsculas |
 | `Telefono` | string(20) | Obligatorio, normalizado E.164 (`+34612345678`) |
-| `Importe` | decimal(10,2) | Copia de `Curso.Precio` al crear |
+| `Importe` | decimal(10,2) | Copia de `Edicion.PrecioReserva` al crear (la señal de la edición) |
 | `StripeSessionId` | string(100)? | Índice único (filtrado no nulo) |
 | `StripePaymentIntentId` | string(100)? | Para localizar el pago en Stripe |
 | `ExpiraEn` | DateTimeOffset | |

@@ -29,4 +29,5 @@ public sealed record CursoAdminDto(
         c.Activo, c.Orden, c.PrecioReserva);
 }
 
-public sealed record CursoOpcionDto(Guid Id, string Nombre, string Slug, bool Activo);
+/// <param name="Precio">Defaults of a new edition.</param>
+public sealed record CursoOpcionDto(Guid Id, string Nombre, string Slug, bool Activo, decimal Precio, decimal PrecioReserva);

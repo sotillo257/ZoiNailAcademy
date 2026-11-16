@@ -80,6 +80,7 @@ Cinco entidades de negocio: Curso, Edición, Reserva (una sola para tarjeta y tr
 | DescripcionCorta, Descripcion | string | |
 | Precio | decimal (EUR) | Precio total. Pendiente confirmar si incluye IVA |
 | PrecioReserva | decimal (EUR) | Señal que se paga al reservar (tarjeta o transferencia/Bizum); el resto se paga en persona, fuera de la web. Si no se indica, igual a `Precio` |
+| (valores por defecto) | | Precio y PrecioReserva del curso son los valores por defecto de cada edición nueva |
 | Imagen | string | Ruta en `public/` del front |
 | Ubicacion, DuracionTexto | string? | Para la ficha y los emails |
 | Activo, Orden | bool, int | Orden de aparición en la web |
@@ -92,6 +93,8 @@ Cinco entidades de negocio: Curso, Edición, Reserva (una sola para tarjeta y tr
 | CursoId | Guid | FK a Curso |
 | Inicio | DateTimeOffset | UTC |
 | Plazas | int | Total de plazas |
+| Precio | decimal (EUR) | Precio de esta edición. Se copia del curso al crearla y puede cambiarse |
+| PrecioReserva | decimal (EUR) | Señal de esta edición. Se copia del curso al crearla y puede cambiarse |
 | Estado | enum | Programada, Oculta, Cancelada |
 | Version | xmin | Concurrencia optimista en las ediciones del backoffice |
 
@@ -107,8 +110,8 @@ Plazas libres = Plazas − reservas Pagadas − reservas Pendientes no caducadas
 | Metodo | enum | Stripe, Manual |
 | Estado | enum | Pendiente, Pagada, Expirada, Cancelada |
 | Nombre, Email, Telefono | string | Teléfono obligatorio, normalizado E.164 |
-| Importe | decimal (EUR) | Lo que se paga online: copia de `PrecioReserva` al reservar |
-| PrecioCurso | decimal (EUR) | Copia de `Precio` al reservar; `PrecioCurso − Importe` se paga en persona |
+| Importe | decimal (EUR) | Lo que se paga online: copia de la `PrecioReserva` de la edición al reservar |
+| PrecioCurso | decimal (EUR) | Copia del `Precio` de la edición al reservar; `PrecioCurso − Importe` se paga en persona |
 | StripeSessionId | string? | Solo método Stripe |
 | ExpiraEn | DateTimeOffset | Caducidad del bloqueo de plaza |
 | RequiereRevision | bool | Pago recibido sin plaza disponible |

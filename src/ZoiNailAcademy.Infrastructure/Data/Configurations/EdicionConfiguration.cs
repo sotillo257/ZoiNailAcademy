@@ -12,6 +12,8 @@ public class EdicionConfiguration : IEntityTypeConfiguration<Edicion>
 
         builder.Property(e => e.Estado).IsRequired().HasConversion<string>().HasMaxLength(20);
         builder.Property(e => e.Notas).HasMaxLength(Edicion.NotasMaxLength);
+        builder.Property(e => e.Precio).HasPrecision(10, 2);
+        builder.Property(e => e.PrecioReserva).HasPrecision(10, 2);
 
         // PostgreSQL xmin as optimistic concurrency token: the backoffice sends back the version it
         // read, and two simultaneous saves cannot both commit.

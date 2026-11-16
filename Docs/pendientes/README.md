@@ -20,7 +20,7 @@ Lo que falta para terminar y poner en producción la API. Al cerrar un punto, m�
 
 ## 2. Configuración en producción (Railway)
 
-- [ ] `src/ZoiNailAcademy.Infrastructure/Data/Seed/cursos.json` lleva textos de relleno marcados `[PENDIENTE]`, con slugs `curso-1` a `curso-4` y precio de 100 €. Hay que sustituirlos por los datos reales de la clienta antes del primer despliegue, o editarlos después desde la API (`PUT /api/admin/cursos/{id}`, solo SuperAdmin) (F02 9.1).
+- [ ] `src/ZoiNailAcademy.Infrastructure/Data/Seed/cursos.json` lleva los 4 cursos con sus nombres reales (Experto de Salón, Técnica Profesional, Especialización en Sistema Dual, Master Educador y Creación de Contenido), pero con descripciones y precios de relleno marcados `[PENDIENTE]` (100 € / 30 €). Hay que poner los datos reales antes del primer despliegue, o editarlos después desde la API (`PUT /api/admin/cursos/{id}`, solo SuperAdmin) (F02 9.1). El sembrado solo inserta slugs que no existen: en una base ya sembrada con `curso-1` a `curso-4`, esos cursos siguen activos y hay que desactivarlos a mano.
 - [ ] `Pago__*` con los datos reales del banco y de Bizum. Comprobar en un móvil que el enlace de WhatsApp se abre con el mensaje (F04 5.1).
 - [ ] Crear la cuenta de Resend, verificar el dominio y configurar `Resend__ApiKey`, `Email__From`, `Email__ReplyTo` y `Email__AvisosClienta` (F06 5.2).
 - [ ] Revisar `Avisos__LoteTamano`, `Avisos__PausaEntreLotesSegundos` y `Avisos__JobIntervaloMinutos` según el plan de Resend (F11).

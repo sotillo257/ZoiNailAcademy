@@ -103,8 +103,8 @@ type MetodoPago = 'Stripe' | 'Manual';
 
 interface CursoResumenDto {
   id: string; slug: string; nombre: string; descripcionCorta: string;
-  precio: number;                 // precio total del curso
-  precioReserva: number;          // lo que se paga al reservar (señal); el resto, en persona. = precio si se paga entero
+  precio: number;                 // precio total del curso (valor por defecto de sus ediciones)
+  precioReserva: number;          // señal del curso (valor por defecto); el resto, en persona. = precio si se paga entero
   imagen: string; orden: number;
   ubicacion: string | null; duracionTexto: string | null;
   proximaEdicion: EdicionPublicaDto | null;
@@ -117,6 +117,8 @@ interface EdicionPublicaDto {
   id: string; inicio: string;     // ISO con offset
   plazasTotales: number; plazasLibres: number;
   estado: EstadoEdicionPublico;   // UltimasPlazas si libres <= Reservas__UmbralUltimasPlazas
+  precio: number;                 // precio de ESTA edición (copiado del curso al crearla, editable)
+  precioReserva: number;          // señal de ESTA edición
 }
 interface ReservaPublicaDto {
   codigo: string; estado: EstadoReserva; metodo: MetodoPago;

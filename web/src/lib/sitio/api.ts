@@ -11,6 +11,8 @@ export interface EdicionPublicaDto {
   plazasTotales: number;
   plazasLibres: number;
   estado: EstadoEdicionPublico;
+  precio: number;
+  precioReserva: number;
 }
 
 export interface CursoResumenDto {

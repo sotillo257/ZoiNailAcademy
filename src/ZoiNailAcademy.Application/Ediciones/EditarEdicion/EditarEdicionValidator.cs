@@ -13,6 +13,19 @@ public class EditarEdicionValidator : AbstractValidator<EditarEdicionCommand>
 
         RuleFor(x => x.Estado).IsInEnum().WithMessage("El estado de la edición no es válido.");
 
+        RuleFor(x => x.Precio)
+            .GreaterThan(0).WithMessage("El precio debe ser mayor que cero.")
+            .When(x => x.Precio is not null);
+
+        RuleFor(x => x.PrecioReserva)
+            .GreaterThan(0).WithMessage("La reserva de plaza debe ser mayor que cero.")
+            .When(x => x.PrecioReserva is not null);
+
+        RuleFor(x => x)
+            .Must(x => x.Precio is null || x.PrecioReserva is null || x.PrecioReserva <= x.Precio)
+            .WithMessage("La reserva de plaza no puede superar el precio.")
+            .WithName("PrecioReserva");
+
         RuleFor(x => x.Notas)
             .MaximumLength(Edicion.NotasMaxLength)
             .WithMessage($"Las notas no pueden superar {Edicion.NotasMaxLength} caracteres.");

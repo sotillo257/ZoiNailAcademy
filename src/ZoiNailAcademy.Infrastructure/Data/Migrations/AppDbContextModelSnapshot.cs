@@ -150,6 +150,14 @@ namespace ZoiNailAcademy.Infrastructure.Data.Migrations
                     b.Property<int>("Plazas")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Precio")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("PrecioReserva")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
