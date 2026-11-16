@@ -30,13 +30,13 @@ public class Reserva : BaseAuditableEntity
     public string Telefono { get; private set; } = null!;
 
     /// <summary>
-    /// Amount paid online (card or transfer/Bizum): copy of <see cref="Curso.PrecioReserva"/> when the booking was
+    /// Amount paid online (card or transfer/Bizum): copy of <see cref="Edicion.PrecioReserva"/> when the booking was
     /// created.
     /// </summary>
     public decimal Importe { get; private set; }
 
     /// <summary>
-    /// Copy of the full course price when the booking was created. <c>PrecioCurso - Importe</c> is paid in person.
+    /// Copy of the full edition price when the booking was created. <c>PrecioCurso - Importe</c> is paid in person.
     /// </summary>
     public decimal PrecioCurso { get; private set; }
 
@@ -68,7 +68,7 @@ public class Reserva : BaseAuditableEntity
     {
     }
 
-    /// <param name="edicion">Edition with its <see cref="Edicion.Curso"/> loaded (the prices are copied).</param>
+    /// <param name="edicion">Edition whose prices are copied.</param>
     public static Reserva Create(
         Edicion edicion, string codigo, MetodoPago metodo, string nombre, string email, string telefono,
         DateTimeOffset expiraEn, DateTimeOffset now)
@@ -99,8 +99,8 @@ public class Reserva : BaseAuditableEntity
             Nombre = Required(nombre, "El nombre es obligatorio."),
             Email = Required(email, "El email es obligatorio.").ToLowerInvariant(),
             Telefono = Required(telefono, "El teléfono es obligatorio."),
-            Importe = edicion.Curso.PrecioReserva,
-            PrecioCurso = edicion.Curso.Precio,
+            Importe = edicion.PrecioReserva,
+            PrecioCurso = edicion.Precio,
             ExpiraEn = expiraEn.ToUniversalTime(),
             ConsentimientoEn = now.ToUniversalTime()
         };

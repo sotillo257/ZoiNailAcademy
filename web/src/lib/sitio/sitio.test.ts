@@ -9,6 +9,8 @@ import { contactoEsquema, listaEsperaEsquema, mensajeConAsunto, pareceTelefono, 
 const ed = (id: string, plazasLibres: number, estado: EdicionPublicaDto["estado"], inicio = "2027-01-18T08:00:00Z"): EdicionPublicaDto => ({
   id,
   inicio,
+  precio: 590,
+  precioReserva: 120,
   plazasTotales: 10,
   plazasLibres,
   estado,

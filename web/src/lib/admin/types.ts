@@ -33,6 +33,8 @@ export interface EdicionAdminDto {
   reservable: boolean;
   notas: string | null;
   version: string;
+  precio: number;
+  precioReserva: number;
 }
 
 export interface EdicionEditadaDto {
@@ -89,6 +91,9 @@ export interface CursoOpcionDto {
   nombre: string;
   slug: string;
   activo: boolean;
+  /** Defaults for a new edition. */
+  precio: number;
+  precioReserva: number;
 }
 
 export interface CursoAdminDto {

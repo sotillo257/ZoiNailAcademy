@@ -5,12 +5,14 @@ using ZoiNailAcademy.Domain.Services;
 namespace ZoiNailAcademy.Application.Ediciones;
 
 public sealed record EdicionPublicaDto(
-    Guid Id, DateTimeOffset Inicio, int PlazasTotales, int PlazasLibres, EstadoEdicionPublico Estado)
+    Guid Id, DateTimeOffset Inicio, int PlazasTotales, int PlazasLibres, EstadoEdicionPublico Estado,
+    decimal Precio, decimal PrecioReserva)
 {
     public static EdicionPublicaDto From(Edicion edicion, Ocupacion ocupacion, int umbralUltimasPlazas)
     {
         var libres = PlazasCalculator.Libres(edicion.Plazas, ocupacion.Total);
         return new EdicionPublicaDto(
-            edicion.Id, edicion.Inicio, edicion.Plazas, libres, PlazasCalculator.EstadoPublico(libres, umbralUltimasPlazas));
+            edicion.Id, edicion.Inicio, edicion.Plazas, libres, PlazasCalculator.EstadoPublico(libres, umbralUltimasPlazas),
+            edicion.Precio, edicion.PrecioReserva);
     }
 }

@@ -15,7 +15,7 @@ public class CursosPublicosTests(CustomWebApplicationFactory factory) : Catalogo
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var cursos = await ReadAsync<List<CursoResumenTestDto>>(response);
-        cursos.Select(c => c.Slug).Should().Contain(["curso-1", "curso-2", "curso-3", "curso-4"]);
+        cursos.Select(c => c.Slug).Should().Contain(["experto-de-salon", "tecnica-profesional", "especializacion-en-sistema-dual", "master-educador-y-creacion-de-contenido"]);
         cursos.Select(c => c.Orden).Should().BeInAscendingOrder();
     }
 

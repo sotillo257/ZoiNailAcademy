@@ -22,6 +22,16 @@ public class CrearEdicionValidator : AbstractValidator<CrearEdicionCommand>
             .Must(estado => estado is null or EstadoEdicion.Programada or EstadoEdicion.Oculta)
             .WithMessage("Una edición nueva solo puede estar Programada u Oculta.");
 
+        RuleFor(x => x.Precio)
+            .GreaterThan(0).WithMessage("El precio debe ser mayor que cero.")
+            .When(x => x.Precio is not null);
+
+        RuleFor(x => x.PrecioReserva)
+            .GreaterThan(0).WithMessage("La reserva de plaza debe ser mayor que cero.")
+            .Must((x, reserva) => x.Precio is null || reserva <= x.Precio)
+                .WithMessage("La reserva de plaza no puede superar el precio.")
+            .When(x => x.PrecioReserva is not null);
+
         RuleFor(x => x.Notas)
             .MaximumLength(Edicion.NotasMaxLength)
             .WithMessage($"Las notas no pueden superar {Edicion.NotasMaxLength} caracteres.");

@@ -39,7 +39,7 @@ public class EditarEdicionHandler(
 
         var cambio = edicion.Actualizar(
             request.Inicio, request.Plazas, request.Estado, request.Notas, ocupacion.Total,
-            request.ConfirmarCambioFecha, now, pagadas: ocupacion.Pagadas);
+            request.ConfirmarCambioFecha, now, pagadas: ocupacion.Pagadas, precio: request.Precio, precioReserva: request.PrecioReserva);
 
         // Cancelling the edition cancels its pending bookings in the same save; paid ones are refunded by hand.
         var pendientesCanceladas = cambio.Cancelada

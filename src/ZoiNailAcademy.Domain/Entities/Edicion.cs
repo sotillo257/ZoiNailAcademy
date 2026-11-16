@@ -17,6 +17,15 @@ public class Edicion : BaseAuditableEntity
     public int Plazas { get; private set; }
     public EstadoEdicion Estado { get; private set; }
 
+    /// <summary>
+    /// Full price of this edition. Copied from the course when the edition is created (the client may change it).
+    /// Bookings copy it when they are created, so later changes never alter an existing booking.
+    /// </summary>
+    public decimal Precio { get; private set; }
+
+    /// <summary>Seat deposit paid online for this edition; <c>Precio - PrecioReserva</c> is paid in person.</summary>
+    public decimal PrecioReserva { get; private set; }
+
     /// <summary>Internal notes, only shown in the backoffice.</summary>
     public string? Notas { get; private set; }
 
@@ -27,8 +36,11 @@ public class Edicion : BaseAuditableEntity
     {
     }
 
+    /// <param name="precio">Null: the course price.</param>
+    /// <param name="precioReserva">Null: the course deposit, capped at <paramref name="precio"/>.</param>
     public static Edicion Create(
-        Curso curso, DateTimeOffset inicio, int plazas, EstadoEdicion estado, string? notas, DateTimeOffset now)
+        Curso curso, DateTimeOffset inicio, int plazas, EstadoEdicion estado, string? notas, DateTimeOffset now,
+        decimal? precio = null, decimal? precioReserva = null)
     {
         if (!curso.Activo)
         {
@@ -42,6 +54,7 @@ public class Edicion : BaseAuditableEntity
 
         EnsureInicioFuturo(inicio, now);
         EnsurePlazasEnRango(plazas);
+        var (precioEdicion, reservaEdicion) = ResolverPrecios(curso, precio, precioReserva);
 
         return new Edicion
         {
@@ -51,6 +64,8 @@ public class Edicion : BaseAuditableEntity
             Inicio = inicio.ToUniversalTime(),
             Plazas = plazas,
             Estado = estado,
+            Precio = precioEdicion,
+            PrecioReserva = reservaEdicion,
             Notas = NormalizeNotas(notas)
         };
     }
@@ -73,14 +88,22 @@ public class Edicion : BaseAuditableEntity
     /// Paid bookings, for the cancellation warning (pending ones are cancelled automatically). Defaults to
     /// <paramref name="ocupadas"/>.
     /// </param>
+    /// <param name="precio">Null keeps the current full price.</param>
+    /// <param name="precioReserva">Null keeps the current seat deposit.</param>
     public CambioEdicion Actualizar(
         DateTimeOffset inicio, int plazas, EstadoEdicion estado, string? notas, int ocupadas,
-        bool confirmarCambioFecha, DateTimeOffset now, int? pagadas = null)
+        bool confirmarCambioFecha, DateTimeOffset now, int? pagadas = null,
+        decimal? precio = null, decimal? precioReserva = null)
     {
         inicio = inicio.ToUniversalTime();
+        var nuevoPrecio = precio ?? Precio;
+        var nuevaReserva = precioReserva ?? PrecioReserva;
+        EnsurePrecios(nuevoPrecio, nuevaReserva);
+
         var cambiaInicio = inicio != Inicio;
         var cambiaPlazas = plazas != Plazas;
         var cambiaEstado = estado != Estado;
+        var cambiaPrecios = nuevoPrecio != Precio || nuevaReserva != PrecioReserva;
 
         if (Estado == EstadoEdicion.Cancelada && cambiaEstado)
         {
@@ -88,7 +111,7 @@ public class Edicion : BaseAuditableEntity
                 ErrorCodes.EstadoInvalido, "Una edición cancelada no se puede reactivar: crea una nueva.");
         }
 
-        if ((HaEmpezado(now) || Estado == EstadoEdicion.Cancelada) && (cambiaInicio || cambiaPlazas || cambiaEstado))
+        if ((HaEmpezado(now) || Estado == EstadoEdicion.Cancelada) && (cambiaInicio || cambiaPlazas || cambiaEstado || cambiaPrecios))
         {
             throw new BusinessRuleException(
                 ErrorCodes.EstadoInvalido,
@@ -135,9 +158,33 @@ public class Edicion : BaseAuditableEntity
         Inicio = inicio;
         Plazas = plazas;
         Estado = estado;
+        Precio = nuevoPrecio;
+        PrecioReserva = nuevaReserva;
         Notas = NormalizeNotas(notas);
 
         return new CambioEdicion(publicada, cambiaEstado && estado == EstadoEdicion.Cancelada, avisos);
+    }
+
+    private static (decimal Precio, decimal PrecioReserva) ResolverPrecios(
+        Curso curso, decimal? precio, decimal? precioReserva)
+    {
+        var precioEdicion = precio ?? curso.Precio;
+        var reservaEdicion = precioReserva ?? Math.Min(curso.PrecioReserva, precioEdicion);
+        EnsurePrecios(precioEdicion, reservaEdicion);
+        return (precioEdicion, reservaEdicion);
+    }
+
+    private static void EnsurePrecios(decimal precio, decimal precioReserva)
+    {
+        if (precio <= 0)
+        {
+            throw new DomainException("El precio de la edición debe ser mayor que cero.");
+        }
+
+        if (precioReserva <= 0 || precioReserva > precio)
+        {
+            throw new DomainException("La reserva de plaza debe ser mayor que cero y no superar el precio de la edición.");
+        }
     }
 
     private static void EnsureInicioFuturo(DateTimeOffset inicio, DateTimeOffset now)
